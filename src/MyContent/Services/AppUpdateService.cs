@@ -98,8 +98,8 @@ internal static class AppUpdateService
         progress?.Invoke("Downloading update…");
 
         var downloadUri = new Uri(update.DownloadUrl, UriKind.Absolute);
-        await using var source = (await Http.GetStreamAsync(downloadUri, cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
-        await using var destination = File.Create(installerPath).ConfigureAwait(false);
+        using var source = await Http.GetStreamAsync(downloadUri, cancellationToken).ConfigureAwait(false);
+        using var destination = File.Create(installerPath);
         await source.CopyToAsync(destination, cancellationToken).ConfigureAwait(false);
 
         var appDirectory = AppContext.BaseDirectory.TrimEnd(
