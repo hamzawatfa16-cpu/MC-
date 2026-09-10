@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform;
@@ -33,6 +34,7 @@ internal partial class AuthWindow : Window
         await CheckForUpdatesAsync(true).ConfigureAwait(true);
     }
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "The desktop UI must keep running when an update provider fails unexpectedly.")]
     private async Task CheckForUpdatesAsync(bool showResult)
     {
         UpdateButton.IsEnabled = false;
