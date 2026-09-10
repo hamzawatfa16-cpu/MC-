@@ -11,7 +11,6 @@ public partial class AuthWindow : Window
 {
     private readonly AuthViewModel _viewModel;
     private readonly AppUpdateService _updateService = new();
-    private UpdateCheckResult? _latestUpdate;
 
     public AuthWindow(AuthViewModel viewModel)
     {
@@ -43,7 +42,6 @@ public partial class AuthWindow : Window
         try
         {
             var result = await _updateService.CheckAsync();
-            _latestUpdate = result;
 
             if (result.IsAvailable)
             {
@@ -126,13 +124,12 @@ public partial class AuthWindow : Window
                     new TextBlock
                     {
                         Opacity = 0.75,
-                        Text = "The update will download, install, and restart My Content automatically. Your current window will close during the update."
+                        Text = "The update will download, install, and restart My Content automatically."
                     },
                     new Button
                     {
                         Content = "Install update",
-                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
-                        Tag = result
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch
                     }
                 }
             }
