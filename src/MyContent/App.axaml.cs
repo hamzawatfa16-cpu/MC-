@@ -8,7 +8,7 @@ using MyContent.Views;
 
 namespace MyContent;
 
-internal partial class App : Application
+internal sealed partial class App : Application
 {
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
