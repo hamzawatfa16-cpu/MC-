@@ -30,8 +30,13 @@ internal sealed class GoogleOAuthCallback : IDisposable
             throw new InvalidOperationException("Google sign-in returned an empty callback.");
         }
 
-        while (!string.IsNullOrEmpty(await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false)))
+        while (true)
         {
+            var headerLine = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
+            if (string.IsNullOrEmpty(headerLine))
+            {
+                break;
+            }
         }
 
         var requestParts = requestLine.Split(' ', 3, StringSplitOptions.RemoveEmptyEntries);
@@ -56,5 +61,6 @@ internal sealed class GoogleOAuthCallback : IDisposable
     public void Dispose()
     {
         _listener.Stop();
+        _listener.Dispose();
     }
 }
