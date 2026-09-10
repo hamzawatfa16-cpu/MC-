@@ -8,7 +8,8 @@ using MyContent.ViewModels;
 
 namespace MyContent.Views;
 
-internal partial class AuthWindow : Window
+[SuppressMessage("Reliability", "CA2007:Do not directly await a Task", Justification = "Avalonia UI awaits must resume on the UI thread.")]
+internal sealed partial class AuthWindow : Window
 {
     private readonly AuthViewModel _viewModel;
 
