@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
 using Supabase;
 using Supabase.Gotrue;
 using static Supabase.Gotrue.Constants;
@@ -50,12 +52,14 @@ internal sealed class SupabaseAuthService
         EnsureInitialized();
 
         using var callback = new GoogleOAuthCallback();
+        var state = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
         var authState = await _client.Auth.SignIn(
             Provider.Google,
             new SignInOptions
             {
                 FlowType = OAuthFlowType.PKCE,
-                RedirectTo = callback.RedirectUri
+                RedirectTo = callback.RedirectUri,
+                State = state
             }).ConfigureAwait(false);
 
         if (string.IsNullOrWhiteSpace(authState.PKCEVerifier))
@@ -71,6 +75,12 @@ internal sealed class SupabaseAuthService
 
         var callbackUri = await callback.WaitForCallbackAsync(cancellationToken).ConfigureAwait(false);
         var parameters = ParseQuery(callbackUri.Query);
+
+        if (!parameters.TryGetValue("state", out var returnedState) ||
+            !string.Equals(returnedState, state, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("Google sign-in returned an invalid security state.");
+        }
 
         if (parameters.TryGetValue("error_description", out var errorDescription) &&
             !string.IsNullOrWhiteSpace(errorDescription))
