@@ -3,7 +3,7 @@ using Avalonia.Interactivity;
 
 namespace MyContent.Views;
 
-internal partial class LegalDocumentWindow : Window
+internal sealed partial class LegalDocumentWindow : Window
 {
     public LegalDocumentWindow(string title, string content)
     {
