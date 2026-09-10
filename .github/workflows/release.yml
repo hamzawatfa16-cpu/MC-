@@ -28,14 +28,16 @@ jobs:
         shell: pwsh
         run: |
           $version = "${env:GITHUB_REF_NAME}".TrimStart('v')
+          $assemblyVersion = "${version}.0"
+
           dotnet publish src/MyContent/MyContent.csproj `
             --configuration Release `
             --framework net10.0 `
             --runtime win-x64 `
             --self-contained true `
             -p:Version=$version `
-            -p:AssemblyVersion=$version.0 `
-            -p:FileVersion=$version.0 `
+            -p:AssemblyVersion=$assemblyVersion `
+            -p:FileVersion=$assemblyVersion `
             -p:InformationalVersion=$version `
             --output installer/publish
 
