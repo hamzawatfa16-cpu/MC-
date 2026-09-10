@@ -31,7 +31,7 @@ internal sealed class AsyncCommand : ICommand
 
         try
         {
-            await _execute();
+            await _execute().ConfigureAwait(true);
         }
         finally
         {
