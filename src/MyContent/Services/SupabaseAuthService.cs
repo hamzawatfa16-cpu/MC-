@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
-using System.Text;
 using Supabase;
 using Supabase.Gotrue;
 using static Supabase.Gotrue.Constants;
@@ -58,8 +57,7 @@ internal sealed class SupabaseAuthService
             new SignInOptions
             {
                 FlowType = OAuthFlowType.PKCE,
-                RedirectTo = callback.RedirectUri,
-                State = state
+                RedirectTo = callback.RedirectUri
             }).ConfigureAwait(false);
 
         if (string.IsNullOrWhiteSpace(authState.PKCEVerifier))
@@ -67,9 +65,15 @@ internal sealed class SupabaseAuthService
             throw new InvalidOperationException("Google sign-in could not start securely.");
         }
 
+        var authorizationUriBuilder = new UriBuilder(authState.Uri);
+        var authorizationQuery = authorizationUriBuilder.Query.TrimStart('?');
+        authorizationUriBuilder.Query = string.IsNullOrEmpty(authorizationQuery)
+            ? $"state={Uri.EscapeDataString(state)}"
+            : $"{authorizationQuery}&state={Uri.EscapeDataString(state)}";
+
         Process.Start(new ProcessStartInfo
         {
-            FileName = authState.Uri.ToString(),
+            FileName = authorizationUriBuilder.Uri.ToString(),
             UseShellExecute = true
         });
 
