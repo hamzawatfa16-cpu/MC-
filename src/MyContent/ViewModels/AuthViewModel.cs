@@ -9,13 +9,9 @@ namespace MyContent.ViewModels;
 internal sealed class AuthViewModel : INotifyPropertyChanged
 {
     private readonly SupabaseAuthService _authService;
-    private string _email = string.Empty;
-    private string _password = string.Empty;
-    private string _confirmPassword = string.Empty;
-    private string _statusMessage = "Connecting to Supabase...";
+    private string _statusMessage = "Connecting securely…";
     private string? _errorMessage;
     private string? _authenticatedEmail;
-    private bool _isSignUpMode;
     private bool _termsAccepted;
     private bool _isBusy = true;
     private bool _isSupabaseReady;
@@ -25,17 +21,9 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
 
-        SelectSignInCommand = new AsyncCommand(
-            () => SetModeAsync(false),
-            () => !IsBusy && !IsAuthenticated);
-
-        SelectSignUpCommand = new AsyncCommand(
-            () => SetModeAsync(true),
-            () => !IsBusy && !IsAuthenticated);
-
-        SubmitCommand = new AsyncCommand(
-            SubmitAsync,
-            CanSubmit);
+        SignInWithGoogleCommand = new AsyncCommand(
+            SignInWithGoogleAsync,
+            CanSignInWithGoogle);
 
         SignOutCommand = new AsyncCommand(
             SignOutAsync,
@@ -44,56 +32,9 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public AsyncCommand SelectSignInCommand { get; }
-
-    public AsyncCommand SelectSignUpCommand { get; }
-
-    public AsyncCommand SubmitCommand { get; }
+    public AsyncCommand SignInWithGoogleCommand { get; }
 
     public AsyncCommand SignOutCommand { get; }
-
-    public string Email
-    {
-        get => _email;
-        set
-        {
-            if (SetField(ref _email, value))
-            {
-                RaiseCommandStates();
-            }
-        }
-    }
-
-    public string Password
-    {
-        get => _password;
-        set
-        {
-            if (SetField(ref _password, value))
-            {
-                RaiseCommandStates();
-            }
-        }
-    }
-
-    public string ConfirmPassword
-    {
-        get => _confirmPassword;
-        set => SetField(ref _confirmPassword, value);
-    }
-
-    public bool IsSignUpMode
-    {
-        get => _isSignUpMode;
-        private set
-        {
-            if (SetField(ref _isSignUpMode, value))
-            {
-                OnPropertyChanged(nameof(SubmitButtonText));
-                RaiseCommandStates();
-            }
-        }
-    }
 
     public bool TermsAccepted
     {
@@ -148,8 +89,6 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
 
     public bool CanUseAuthForm => IsSupabaseReady && !IsBusy && !IsAuthenticated;
 
-    public string SubmitButtonText => IsSignUpMode ? "Create account" : "Sign in";
-
     public string StatusMessage
     {
         get => _statusMessage;
@@ -183,14 +122,14 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
             }
             else
             {
-                StatusMessage = "Ready";
+                StatusMessage = "Continue with Google to get started.";
             }
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             IsSupabaseReady = false;
-            StatusMessage = "Supabase connection failed.";
-            ErrorMessage = exception.Message;
+            StatusMessage = "Connection unavailable.";
+            ErrorMessage = "My Content could not connect to its authentication service. Please try again.";
         }
         finally
         {
@@ -198,65 +137,38 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
         }
     }
 
-    private Task SetModeAsync(bool signUp)
-    {
-        IsSignUpMode = signUp;
-        ConfirmPassword = string.Empty;
-        ErrorMessage = null;
-        StatusMessage = signUp ? "Create your My Content account." : "Sign in to My Content.";
-        return Task.CompletedTask;
-    }
-
     [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Authentication provider failures are shown to the user instead of crashing the desktop app.")]
-    private async Task SubmitAsync()
+    private async Task SignInWithGoogleAsync()
     {
-        ErrorMessage = null;
-
-        if (!ValidateInput())
+        if (!CanSignInWithGoogle())
         {
             return;
         }
 
+        ErrorMessage = null;
         IsBusy = true;
+        StatusMessage = "Opening Google sign-in…";
 
         try
         {
-            var email = Email.Trim();
+            await _authService.SignInWithGoogleAsync().ConfigureAwait(true);
 
-            if (IsSignUpMode)
+            var email = _authService.CurrentUserEmail;
+            if (string.IsNullOrWhiteSpace(email))
             {
-                await _authService.SignUpAsync(email, Password).ConfigureAwait(true);
-
-                var authenticatedEmail = _authService.CurrentUserEmail;
-                if (!string.IsNullOrWhiteSpace(authenticatedEmail))
-                {
-                    SetAuthenticated(authenticatedEmail);
-                }
-                else
-                {
-                    Password = string.Empty;
-                    ConfirmPassword = string.Empty;
-                    IsSignUpMode = false;
-                    StatusMessage = "Account created. Check your email to confirm your address, then sign in.";
-                }
+                throw new InvalidOperationException("No authenticated user was returned.");
             }
-            else
-            {
-                await _authService.SignInAsync(email, Password).ConfigureAwait(true);
 
-                var authenticatedEmail = _authService.CurrentUserEmail;
-                if (string.IsNullOrWhiteSpace(authenticatedEmail))
-                {
-                    throw new InvalidOperationException("Supabase did not return a signed-in user.");
-                }
-
-                SetAuthenticated(authenticatedEmail);
-            }
+            SetAuthenticated(email);
         }
-        catch (Exception exception)
+        catch (OperationCanceledException)
         {
-            StatusMessage = "Authentication failed.";
-            ErrorMessage = exception.Message;
+            StatusMessage = "Google sign-in cancelled.";
+        }
+        catch (Exception)
+        {
+            StatusMessage = "Google sign-in could not be completed.";
+            ErrorMessage = "Please finish the Google sign-in in your browser and try again.";
         }
         finally
         {
@@ -275,15 +187,13 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
             await _authService.SignOutAsync().ConfigureAwait(true);
             IsAuthenticated = false;
             AuthenticatedEmail = null;
-            Password = string.Empty;
-            ConfirmPassword = string.Empty;
             TermsAccepted = false;
-            StatusMessage = "Signed out.";
+            StatusMessage = "You have been signed out.";
         }
-        catch (Exception exception)
+        catch (Exception)
         {
-            StatusMessage = "Sign out failed.";
-            ErrorMessage = exception.Message;
+            StatusMessage = "Sign out could not be completed.";
+            ErrorMessage = "Please try signing out again.";
         }
         finally
         {
@@ -291,52 +201,19 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
         }
     }
 
-    private bool ValidateInput()
-    {
-        if (string.IsNullOrWhiteSpace(Email))
-        {
-            ErrorMessage = "Enter your email address.";
-            return false;
-        }
-
-        if (string.IsNullOrWhiteSpace(Password))
-        {
-            ErrorMessage = "Enter your password.";
-            return false;
-        }
-
-        if (IsSignUpMode && Password != ConfirmPassword)
-        {
-            ErrorMessage = "Passwords do not match.";
-            return false;
-        }
-
-        if (!TermsAccepted)
-        {
-            ErrorMessage = "You must agree to the Terms of Service and acknowledge the Cookie Notice.";
-            return false;
-        }
-
-        return true;
-    }
-
-    private bool CanSubmit() =>
+    private bool CanSignInWithGoogle() =>
         CanUseAuthForm && TermsAccepted;
 
     private void SetAuthenticated(string email)
     {
         IsAuthenticated = true;
         AuthenticatedEmail = email;
-        Password = string.Empty;
-        ConfirmPassword = string.Empty;
         StatusMessage = "Signed in successfully.";
     }
 
     private void RaiseCommandStates()
     {
-        SelectSignInCommand.RaiseCanExecuteChanged();
-        SelectSignUpCommand.RaiseCanExecuteChanged();
-        SubmitCommand.RaiseCanExecuteChanged();
+        SignInWithGoogleCommand.RaiseCanExecuteChanged();
         SignOutCommand.RaiseCanExecuteChanged();
     }
 
