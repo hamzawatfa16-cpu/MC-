@@ -6,6 +6,8 @@ using MyContent.Configuration;
 using MyContent.Services;
 using MyContent.ViewModels;
 
+#pragma warning disable CA2007 // Avalonia UI awaits must resume on the UI thread.
+
 namespace MyContent.Views;
 
 [SuppressMessage("Reliability", "CA2007:Do not directly await a Task", Justification = "Avalonia UI awaits must resume on the UI thread.")]
@@ -238,3 +240,5 @@ internal sealed partial class AuthWindow : Window
         await window.ShowDialog(this).ConfigureAwait(true);
     }
 }
+
+#pragma warning restore CA2007
