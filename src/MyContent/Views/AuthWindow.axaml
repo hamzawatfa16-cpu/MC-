@@ -57,7 +57,7 @@
             Grid.Column="1"
             Classes="ghost-action"
             Click="OnUpdateClicked"
-            Content="Up to date · v0.1.0" />
+            Content="Checking updates…" />
       </Grid>
 
       <ScrollViewer Grid.Row="1" Margin="0,18,0,18" HorizontalScrollBarVisibility="Disabled">
