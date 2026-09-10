@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform;
@@ -7,10 +8,10 @@ using MyContent.ViewModels;
 
 namespace MyContent.Views;
 
+[SuppressMessage("Design", "CA1515:Consider making public types internal", Justification = "The XAML root type is kept public for Avalonia generated access.")]
 public partial class AuthWindow : Window
 {
     private readonly AuthViewModel _viewModel;
-    private readonly AppUpdateService _updateService = new();
 
     internal AuthWindow(AuthViewModel viewModel)
     {
@@ -25,15 +26,16 @@ public partial class AuthWindow : Window
     {
         Opened -= OnOpened;
         EmailBox.Focus();
-        await _viewModel.InitializeAsync();
+        await _viewModel.InitializeAsync().ConfigureAwait(true);
         _ = CheckForUpdatesAsync(false);
     }
 
     private async void OnUpdateClicked(object? sender, RoutedEventArgs e)
     {
-        await CheckForUpdatesAsync(true);
+        await CheckForUpdatesAsync(true).ConfigureAwait(true);
     }
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "The desktop UI must keep running when an update provider fails unexpectedly.")]
     private async Task CheckForUpdatesAsync(bool showResult)
     {
         UpdateButton.IsEnabled = false;
@@ -41,7 +43,7 @@ public partial class AuthWindow : Window
 
         try
         {
-            var result = await _updateService.CheckAsync();
+            var result = await AppUpdateService.CheckAsync().ConfigureAwait(true);
 
             if (result.IsAvailable)
             {
@@ -49,7 +51,7 @@ public partial class AuthWindow : Window
 
                 if (showResult)
                 {
-                    await InstallUpdateAsync(result);
+                    await InstallUpdateAsync(result).ConfigureAwait(true);
                 }
             }
             else if (result.IsUpToDate)
@@ -57,7 +59,7 @@ public partial class AuthWindow : Window
                 UpdateButton.Content = $"Up to date · v{AppVersion.Current}";
                 if (showResult)
                 {
-                    await ShowMessageAsync("My Content is up to date", $"You are running v{AppVersion.Current}. The latest release is {result.TargetVersion}.");
+                    await ShowMessageAsync("My Content is up to date", $"You are running v{AppVersion.Current}. The latest release is {result.TargetVersion}.").ConfigureAwait(true);
                 }
             }
             else if (!result.HasRelease)
@@ -65,7 +67,7 @@ public partial class AuthWindow : Window
                 UpdateButton.Content = $"v{AppVersion.Current}";
                 if (showResult)
                 {
-                    await ShowMessageAsync("No release yet", "There is no GitHub Release published for My Content yet. The updater is ready and will use the first Windows release package.");
+                    await ShowMessageAsync("No release yet", "There is no GitHub Release published for My Content yet. The updater is ready and will use the first Windows release package.").ConfigureAwait(true);
                 }
             }
             else
@@ -73,7 +75,7 @@ public partial class AuthWindow : Window
                 UpdateButton.Content = $"v{AppVersion.Current}";
                 if (showResult)
                 {
-                    await ShowMessageAsync("Update check failed", result.Error ?? "Unable to check for updates.");
+                    await ShowMessageAsync("Update check failed", result.Error ?? "Unable to check for updates.").ConfigureAwait(true);
                 }
             }
         }
@@ -82,7 +84,7 @@ public partial class AuthWindow : Window
             UpdateButton.Content = $"v{AppVersion.Current}";
             if (showResult)
             {
-                await ShowMessageAsync("Update check failed", exception.Message);
+                await ShowMessageAsync("Update check failed", exception.Message).ConfigureAwait(true);
             }
         }
         finally
@@ -140,10 +142,39 @@ public partial class AuthWindow : Window
         {
             confirm.Close();
             UpdateButton.Content = "Installing…";
-            await _updateService.ApplyAsync(result, message => UpdateButton.Content = message);
+
+            try
+            {
+                await AppUpdateService.ApplyAsync(result, message => UpdateButton.Content = message).ConfigureAwait(true);
+            }
+            catch (HttpRequestException exception)
+            {
+                await ShowMessageAsync("Update failed", exception.Message).ConfigureAwait(true);
+            }
+            catch (UriFormatException exception)
+            {
+                await ShowMessageAsync("Update failed", exception.Message).ConfigureAwait(true);
+            }
+            catch (IOException exception)
+            {
+                await ShowMessageAsync("Update failed", exception.Message).ConfigureAwait(true);
+            }
+            catch (UnauthorizedAccessException exception)
+            {
+                await ShowMessageAsync("Update failed", exception.Message).ConfigureAwait(true);
+            }
+            catch (InvalidOperationException exception)
+            {
+                await ShowMessageAsync("Update failed", exception.Message).ConfigureAwait(true);
+            }
+            finally
+            {
+                UpdateButton.Content = $"v{AppVersion.Current}";
+                UpdateButton.IsEnabled = true;
+            }
         };
 
-        await confirm.ShowDialog(this);
+        await confirm.ShowDialog(this).ConfigureAwait(true);
     }
 
     private async Task ShowMessageAsync(string title, string message)
@@ -183,17 +214,17 @@ public partial class AuthWindow : Window
 
         var button = ((StackPanel)window.Content!).Children.OfType<Button>().Single();
         button.Click += (_, _) => window.Close();
-        await window.ShowDialog(this);
+        await window.ShowDialog(this).ConfigureAwait(true);
     }
 
     private async void OnTermsClicked(object? sender, RoutedEventArgs e)
     {
-        await ShowLegalDocumentAsync("Terms of Service", "TermsOfService.txt");
+        await ShowLegalDocumentAsync("Terms of Service", "TermsOfService.txt").ConfigureAwait(true);
     }
 
     private async void OnCookieClicked(object? sender, RoutedEventArgs e)
     {
-        await ShowLegalDocumentAsync("Cookie Notice", "CookieNotice.txt");
+        await ShowLegalDocumentAsync("Cookie Notice", "CookieNotice.txt").ConfigureAwait(true);
     }
 
     private async Task ShowLegalDocumentAsync(string title, string fileName)
@@ -201,9 +232,9 @@ public partial class AuthWindow : Window
         var resourceUri = new Uri($"avares://MyContent/Legal/{fileName}");
         await using var stream = AssetLoader.Open(resourceUri);
         using var reader = new StreamReader(stream);
-        var content = await reader.ReadToEndAsync();
+        var content = await reader.ReadToEndAsync().ConfigureAwait(true);
 
         var window = new LegalDocumentWindow(title, content);
-        await window.ShowDialog(this);
+        await window.ShowDialog(this).ConfigureAwait(true);
     }
 }
