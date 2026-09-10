@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform;
@@ -8,8 +7,7 @@ using MyContent.ViewModels;
 
 namespace MyContent.Views;
 
-[SuppressMessage("Design", "CA1515:Consider making public types internal", Justification = "The XAML root type is kept public for Avalonia generated access.")]
-public partial class AuthWindow : Window
+internal partial class AuthWindow : Window
 {
     private readonly AuthViewModel _viewModel;
 
@@ -35,7 +33,6 @@ public partial class AuthWindow : Window
         await CheckForUpdatesAsync(true).ConfigureAwait(true);
     }
 
-    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "The desktop UI must keep running when an update provider fails unexpectedly.")]
     private async Task CheckForUpdatesAsync(bool showResult)
     {
         UpdateButton.IsEnabled = false;
