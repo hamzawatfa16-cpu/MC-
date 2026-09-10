@@ -20,14 +20,13 @@ internal sealed partial class AuthWindow : Window
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         DataContext = _viewModel;
         InitializeComponent();
-        UpdateButton.Content = $"Update · v{AppVersion.Current}";
+        UpdateButton.Content = $"Up to date · v{AppVersion.Current}";
         Opened += OnOpened;
     }
 
     private async void OnOpened(object? sender, EventArgs e)
     {
         Opened -= OnOpened;
-        EmailBox.Focus();
         await _viewModel.InitializeAsync().ConfigureAwait(true);
         _ = CheckForUpdatesAsync(false);
     }
@@ -69,7 +68,7 @@ internal sealed partial class AuthWindow : Window
                 UpdateButton.Content = $"v{AppVersion.Current}";
                 if (showResult)
                 {
-                    await ShowMessageAsync("No release yet", "There is no GitHub Release published for My Content yet. The updater is ready and will use the first Windows release package.").ConfigureAwait(true);
+                    await ShowMessageAsync("No release yet", "There is no GitHub Release published for My Content yet. The updater is ready for the first Windows release package.").ConfigureAwait(true);
                 }
             }
             else
@@ -77,16 +76,16 @@ internal sealed partial class AuthWindow : Window
                 UpdateButton.Content = $"v{AppVersion.Current}";
                 if (showResult)
                 {
-                    await ShowMessageAsync("Update check failed", result.Error ?? "Unable to check for updates.").ConfigureAwait(true);
+                    await ShowMessageAsync("Update check failed", "My Content could not check for updates right now.").ConfigureAwait(true);
                 }
             }
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             UpdateButton.Content = $"v{AppVersion.Current}";
             if (showResult)
             {
-                await ShowMessageAsync("Update check failed", exception.Message).ConfigureAwait(true);
+                await ShowMessageAsync("Update check failed", "My Content could not check for updates right now.").ConfigureAwait(true);
             }
         }
         finally
@@ -149,29 +148,29 @@ internal sealed partial class AuthWindow : Window
             {
                 await AppUpdateService.ApplyAsync(result, message => UpdateButton.Content = message).ConfigureAwait(true);
             }
-            catch (HttpRequestException exception)
+            catch (HttpRequestException)
             {
-                await ShowMessageAsync("Update failed", exception.Message).ConfigureAwait(true);
+                await ShowMessageAsync("Update failed", "The update could not be downloaded.").ConfigureAwait(true);
             }
-            catch (UriFormatException exception)
+            catch (UriFormatException)
             {
-                await ShowMessageAsync("Update failed", exception.Message).ConfigureAwait(true);
+                await ShowMessageAsync("Update failed", "The update link was invalid.").ConfigureAwait(true);
             }
-            catch (IOException exception)
+            catch (IOException)
             {
-                await ShowMessageAsync("Update failed", exception.Message).ConfigureAwait(true);
+                await ShowMessageAsync("Update failed", "The update could not be saved on this computer.").ConfigureAwait(true);
             }
-            catch (UnauthorizedAccessException exception)
+            catch (UnauthorizedAccessException)
             {
-                await ShowMessageAsync("Update failed", exception.Message).ConfigureAwait(true);
+                await ShowMessageAsync("Update failed", "My Content does not have permission to install the update.").ConfigureAwait(true);
             }
-            catch (InvalidOperationException exception)
+            catch (InvalidOperationException)
             {
-                await ShowMessageAsync("Update failed", exception.Message).ConfigureAwait(true);
+                await ShowMessageAsync("Update failed", "The update could not be started.").ConfigureAwait(true);
             }
             finally
             {
-                UpdateButton.Content = $"v{AppVersion.Current}";
+                UpdateButton.Content = $"Up to date · v{AppVersion.Current}";
                 UpdateButton.IsEnabled = true;
             }
         };
