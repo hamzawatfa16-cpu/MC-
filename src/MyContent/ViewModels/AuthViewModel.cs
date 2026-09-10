@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using MyContent.Commands;
 using MyContent.Services;
@@ -167,11 +168,12 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
         private set => SetField(ref _authenticatedEmail, value);
     }
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Authentication provider failures are shown to the user instead of crashing the desktop app.")]
     public async Task InitializeAsync()
     {
         try
         {
-            await _authService.InitializeAsync();
+            await _authService.InitializeAsync().ConfigureAwait(true);
             IsSupabaseReady = true;
 
             var email = _authService.CurrentUserEmail;
@@ -205,6 +207,7 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
         return Task.CompletedTask;
     }
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Authentication provider failures are shown to the user instead of crashing the desktop app.")]
     private async Task SubmitAsync()
     {
         ErrorMessage = null;
@@ -222,7 +225,7 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
 
             if (IsSignUpMode)
             {
-                await _authService.SignUpAsync(email, Password);
+                await _authService.SignUpAsync(email, Password).ConfigureAwait(true);
 
                 var authenticatedEmail = _authService.CurrentUserEmail;
                 if (!string.IsNullOrWhiteSpace(authenticatedEmail))
@@ -239,7 +242,7 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
             }
             else
             {
-                await _authService.SignInAsync(email, Password);
+                await _authService.SignInAsync(email, Password).ConfigureAwait(true);
 
                 var authenticatedEmail = _authService.CurrentUserEmail;
                 if (string.IsNullOrWhiteSpace(authenticatedEmail))
@@ -261,6 +264,7 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
         }
     }
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Authentication provider failures are shown to the user instead of crashing the desktop app.")]
     private async Task SignOutAsync()
     {
         ErrorMessage = null;
@@ -268,7 +272,7 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
 
         try
         {
-            await _authService.SignOutAsync();
+            await _authService.SignOutAsync().ConfigureAwait(true);
             IsAuthenticated = false;
             AuthenticatedEmail = null;
             Password = string.Empty;
