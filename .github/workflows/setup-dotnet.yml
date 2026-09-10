@@ -1,0 +1,13 @@
+name: Setup .NET
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup-dotnet:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: latest
+          dotnet-channel: LTS
