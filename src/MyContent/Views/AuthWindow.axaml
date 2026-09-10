@@ -1,0 +1,72 @@
+<Window
+    x:Class="MyContent.Views.AuthWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Width="560"
+    Height="760"
+    MinWidth="480"
+    MinHeight="640"
+    Title="My Content"
+    WindowStartupLocation="CenterScreen">
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+    <Grid MaxWidth="460" Margin="40" HorizontalAlignment="Center" RowDefinitions="Auto,Auto,Auto,*,Auto">
+      <StackPanel Grid.Row="0" Spacing="8">
+        <TextBlock FontSize="32" FontWeight="SemiBold" Text="My Content" />
+        <TextBlock Opacity="0.7" Text="Creator intelligence, built from your real data." TextWrapping="Wrap" />
+      </StackPanel>
+
+      <Border Grid.Row="1" Margin="0,28,0,0" Padding="4" Background="#12000000" CornerRadius="10">
+        <Grid ColumnDefinitions="*,*">
+          <Button Grid.Column="0" Command="{Binding SelectSignInCommand}" Content="Sign in" />
+          <Button Grid.Column="1" Command="{Binding SelectSignUpCommand}" Content="Create account" />
+        </Grid>
+      </Border>
+
+      <StackPanel Grid.Row="2" Margin="0,18,0,0" Spacing="4">
+        <TextBlock FontWeight="SemiBold" Text="{Binding StatusMessage}" TextWrapping="Wrap" />
+        <TextBlock Foreground="#C62828" Text="{Binding ErrorMessage}" TextWrapping="Wrap" />
+      </StackPanel>
+
+      <StackPanel Grid.Row="3" Margin="0,22,0,0" IsEnabled="{Binding CanUseAuthForm}" Spacing="16">
+        <StackPanel Spacing="6">
+          <TextBlock Text="Email" />
+          <TextBox x:Name="EmailBox" Text="{Binding Email, Mode=TwoWay}" Watermark="you@example.com" />
+        </StackPanel>
+
+        <StackPanel Spacing="6">
+          <TextBlock Text="Password" />
+          <TextBox PasswordChar="●" Text="{Binding Password, Mode=TwoWay}" Watermark="Password" />
+        </StackPanel>
+
+        <StackPanel IsVisible="{Binding IsSignUpMode}" Spacing="6">
+          <TextBlock Text="Confirm password" />
+          <TextBox PasswordChar="●" Text="{Binding ConfirmPassword, Mode=TwoWay}" Watermark="Repeat your password" />
+        </StackPanel>
+
+        <CheckBox IsChecked="{Binding TermsAccepted, Mode=TwoWay}">
+          <TextBlock Text="I agree to the Terms of Service and acknowledge the Cookie Notice." TextWrapping="Wrap" />
+        </CheckBox>
+
+        <Button
+            HorizontalAlignment="Stretch"
+            Command="{Binding SubmitCommand}"
+            Content="{Binding SubmitButtonText}"
+            IsDefault="True" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+          <Button Padding="0" Background="Transparent" BorderThickness="0" Content="Terms of Service" Click="OnTermsClicked" />
+          <TextBlock VerticalAlignment="Center" Opacity="0.45" Text="•" />
+          <Button Padding="0" Background="Transparent" BorderThickness="0" Content="Cookie Notice" Click="OnCookieClicked" />
+        </StackPanel>
+      </StackPanel>
+
+      <Border Grid.Row="4" Margin="0,24,0,0" Padding="18" Background="#10000000" CornerRadius="12" IsVisible="{Binding IsAuthenticated}">
+        <StackPanel Spacing="12">
+          <TextBlock FontSize="18" FontWeight="SemiBold" Text="You are signed in" />
+          <TextBlock Opacity="0.75" Text="{Binding AuthenticatedEmail}" TextWrapping="Wrap" />
+          <Button Command="{Binding SignOutCommand}" Content="Sign out" />
+        </StackPanel>
+      </Border>
+    </Grid>
+  </ScrollViewer>
+</Window>

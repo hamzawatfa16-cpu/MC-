@@ -1,0 +1,39 @@
+MY CONTENT — TERMS OF SERVICE
+
+Effective date: 10 September 2026
+
+1. Acceptance
+By creating an account or using My Content, you agree to these Terms of Service. If you do not agree, do not use the application.
+
+2. Service
+My Content is a Windows desktop application intended to connect supported creator accounts and present analytics and intelligence based on data available through authorized platform APIs.
+
+3. Account
+You are responsible for keeping access to your account and connected platform accounts secure. You must provide information that is accurate and must not use another person's account or data without authorization.
+
+4. Connected Platforms
+Connecting YouTube, Instagram, TikTok, or another supported service requires authorization from that service. Their terms, policies, permissions, and API limitations also apply. My Content does not grant permissions that the platform itself does not provide.
+
+5. Data and Analytics
+My Content may store platform data and calculated analytics to provide the service. Platform facts are kept distinct from calculated analytics and AI-derived interpretations. Missing platform data is not treated as zero.
+
+6. AI and Insights
+AI-generated insights are interpretations based on available stored evidence. They are not guarantees of future performance and do not override source platform facts.
+
+7. Acceptable Use
+You must not use My Content to access data without authorization, interfere with the service, attempt to bypass access controls, or violate applicable laws or third-party platform rules.
+
+8. Availability
+The application depends on Supabase and supported third-party platform services. Features may become unavailable when a provider changes, limits, removes, or discontinues an API capability.
+
+9. Changes
+These Terms may be updated when the service or its legal requirements change. The effective date will identify the current version.
+
+10. Contact
+No contact address is specified in this initial application document. A current contact method will be published before a production release that requires one.
+
+11. No Warranty
+The application is provided on an availability basis. No promise is made that every platform metric, integration, or analysis will always be available or accurate beyond the source data and calculations actually available to the application.
+
+12. Termination
+Access may be suspended or ended when necessary to protect the service, users, platform permissions, or security.

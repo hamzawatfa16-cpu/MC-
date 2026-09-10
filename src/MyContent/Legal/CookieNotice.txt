@@ -1,0 +1,21 @@
+MY CONTENT — COOKIE NOTICE
+
+Effective date: 10 September 2026
+
+1. What this notice covers
+This notice explains how My Content handles browser-cookie-related technologies in the current Windows desktop application.
+
+2. Native desktop application
+My Content is a native Windows desktop application. The current password-based Supabase Auth flow does not use browser cookies as its normal application session mechanism.
+
+3. Supabase Auth
+Authentication is provided by Supabase Auth. The application uses the Supabase client to sign users in and out. The current implementation does not intentionally place authentication cookies in your Windows browser.
+
+4. External websites and providers
+When an authentication or connected-platform flow opens an external website, that website or provider may use cookies or similar technologies under its own privacy and cookie policies. Those technologies are controlled by the external service, not by this application.
+
+5. Future changes
+If My Content later introduces functionality that uses browser cookies or another tracking technology directly, this notice will be updated before that functionality is used.
+
+6. Your acknowledgement
+By proceeding with account creation or sign-in, you acknowledge that you have read this Cookie Notice.

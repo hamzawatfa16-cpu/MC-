@@ -1,0 +1,18 @@
+<Window
+    x:Class="MyContent.Views.LegalDocumentWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Width="760"
+    Height="640"
+    MinWidth="520"
+    MinHeight="420"
+    Title="My Content"
+    WindowStartupLocation="CenterOwner">
+  <Grid Margin="28" RowDefinitions="Auto,*,Auto">
+    <TextBlock x:Name="TitleText" FontSize="28" FontWeight="SemiBold" />
+    <ScrollViewer Grid.Row="1" Margin="0,18,0,18">
+      <TextBlock x:Name="DocumentText" FontSize="14" LineHeight="22" TextWrapping="Wrap" />
+    </ScrollViewer>
+    <Button Grid.Row="2" HorizontalAlignment="Right" Content="Close" Click="OnCloseClicked" />
+  </Grid>
+</Window>
