@@ -9,7 +9,7 @@
     Title="My Content"
     WindowStartupLocation="CenterScreen">
   <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-    <Grid MaxWidth="460" Margin="40" HorizontalAlignment="Center" RowDefinitions="Auto,Auto,Auto,*,Auto">
+    <Grid MaxWidth="460" Margin="40" HorizontalAlignment="Center" RowDefinitions="Auto,Auto,Auto,*,Auto,Auto">
       <StackPanel Grid.Row="0" Spacing="8">
         <TextBlock FontSize="32" FontWeight="SemiBold" Text="My Content" />
         <TextBlock Opacity="0.7" Text="Creator intelligence, built from your real data." TextWrapping="Wrap" />
@@ -52,15 +52,15 @@
             Command="{Binding SubmitCommand}"
             Content="{Binding SubmitButtonText}"
             IsDefault="True" />
-
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
-          <Button Padding="0" Background="Transparent" BorderThickness="0" Content="Terms of Service" Click="OnTermsClicked" />
-          <TextBlock VerticalAlignment="Center" Opacity="0.45" Text="•" />
-          <Button Padding="0" Background="Transparent" BorderThickness="0" Content="Cookie Notice" Click="OnCookieClicked" />
-        </StackPanel>
       </StackPanel>
 
-      <Border Grid.Row="4" Margin="0,24,0,0" Padding="18" Background="#10000000" CornerRadius="12" IsVisible="{Binding IsAuthenticated}">
+      <StackPanel Grid.Row="4" Margin="0,18,0,0" HorizontalAlignment="Center" Orientation="Horizontal" Spacing="8">
+        <Button Padding="0" Background="Transparent" BorderThickness="0" Content="Terms of Service" Click="OnTermsClicked" />
+        <TextBlock VerticalAlignment="Center" Opacity="0.45" Text="•" />
+        <Button Padding="0" Background="Transparent" BorderThickness="0" Content="Cookie Notice" Click="OnCookieClicked" />
+      </StackPanel>
+
+      <Border Grid.Row="5" Margin="0,18,0,0" Padding="18" Background="#10000000" CornerRadius="12" IsVisible="{Binding IsAuthenticated}">
         <StackPanel Spacing="12">
           <TextBlock FontSize="18" FontWeight="SemiBold" Text="You are signed in" />
           <TextBlock Opacity="0.75" Text="{Binding AuthenticatedEmail}" TextWrapping="Wrap" />
