@@ -12,7 +12,7 @@ public partial class AuthWindow : Window
     private readonly AuthViewModel _viewModel;
     private readonly AppUpdateService _updateService = new();
 
-    public AuthWindow(AuthViewModel viewModel)
+    internal AuthWindow(AuthViewModel viewModel)
     {
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         DataContext = _viewModel;
