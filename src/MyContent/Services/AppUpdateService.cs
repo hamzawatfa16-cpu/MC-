@@ -98,11 +98,9 @@ internal static class AppUpdateService
         progress?.Invoke("Downloading update…");
 
         var downloadUri = new Uri(update.DownloadUrl, UriKind.Absolute);
-        await using (var source = await Http.GetStreamAsync(downloadUri, cancellationToken).ConfigureAwait(false))
-        await using (var destination = File.Create(installerPath))
-        {
-            await source.CopyToAsync(destination, cancellationToken).ConfigureAwait(false);
-        }
+        await using var source = await Http.GetStreamAsync(downloadUri, cancellationToken).ConfigureAwait(false);
+        await using var destination = File.Create(installerPath);
+        await source.CopyToAsync(destination, cancellationToken).ConfigureAwait(false);
 
         var appDirectory = AppContext.BaseDirectory.TrimEnd(
             Path.DirectorySeparatorChar,
@@ -129,7 +127,7 @@ internal static class AppUpdateService
     private static Version? ParseVersion(string tag)
     {
         var normalized = tag.Trim();
-        while (normalized.StartsWith('v', StringComparison.OrdinalIgnoreCase))
+        while (normalized.Length > 0 && (normalized[0] == 'v' || normalized[0] == 'V'))
         {
             normalized = normalized[1..];
         }
