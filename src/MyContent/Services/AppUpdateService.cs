@@ -39,7 +39,7 @@ internal sealed class AppUpdateService
             var remoteVersion = ParseVersion(release.TagName);
             if (remoteVersion is null)
             {
-                return UpdateCheckResult.Error("The latest GitHub release has an invalid version tag.");
+                return UpdateCheckResult.Failure("The latest GitHub release has an invalid version tag.");
             }
 
             var current = Version.Parse(AppVersion.Current);
@@ -53,7 +53,7 @@ internal sealed class AppUpdateService
 
             if (asset is null || string.IsNullOrWhiteSpace(asset.BrowserDownloadUrl))
             {
-                return UpdateCheckResult.Error(
+                return UpdateCheckResult.Failure(
                     $"Version {release.TagName} is available, but its Windows installer is missing ({AppVersion.ReleaseAssetName}).");
             }
 
@@ -70,7 +70,7 @@ internal sealed class AppUpdateService
         }
         catch (Exception exception)
         {
-            return UpdateCheckResult.Error(exception.Message);
+            return UpdateCheckResult.Failure(exception.Message);
         }
     }
 
@@ -104,11 +104,14 @@ internal sealed class AppUpdateService
             FileName = installerPath,
             Arguments = $"/VERYSILENT /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /DIR=\"{appDirectory}\"",
             UseShellExecute = true,
-            Verb = "runas",
             WorkingDirectory = Path.GetTempPath(),
         };
 
-        Process.Start(startInfo);
+        if (Process.Start(startInfo) is null)
+        {
+            throw new InvalidOperationException("Windows could not start the downloaded installer.");
+        }
+
         Environment.Exit(0);
     }
 
@@ -155,6 +158,6 @@ internal sealed record UpdateCheckResult(
     public static UpdateCheckResult Available(string current, string target, string name, string notes, string url) =>
         new(current, target, name, notes, url, true, true, null);
 
-    public static UpdateCheckResult Error(string error) =>
+    public static UpdateCheckResult Failure(string error) =>
         new(AppVersion.Current, AppVersion.Current, "", "", null, false, false, error);
 }
