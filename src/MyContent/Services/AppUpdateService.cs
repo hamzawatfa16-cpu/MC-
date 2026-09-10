@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.IO.Compression;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using MyContent.Configuration;
@@ -10,7 +9,7 @@ internal sealed class AppUpdateService
 {
     private static readonly HttpClient Http = new()
     {
-        Timeout = TimeSpan.FromSeconds(20)
+        Timeout = TimeSpan.FromMinutes(5)
     };
 
     public async Task<UpdateCheckResult> CheckAsync(CancellationToken cancellationToken = default)
@@ -55,7 +54,7 @@ internal sealed class AppUpdateService
             if (asset is null || string.IsNullOrWhiteSpace(asset.BrowserDownloadUrl))
             {
                 return UpdateCheckResult.Error(
-                    $"Version {release.TagName} is available, but the Windows update package is missing ({AppVersion.ReleaseAssetName}).");
+                    $"Version {release.TagName} is available, but its Windows installer is missing ({AppVersion.ReleaseAssetName}).");
             }
 
             return UpdateCheckResult.Available(
@@ -82,59 +81,31 @@ internal sealed class AppUpdateService
             throw new InvalidOperationException("There is no valid update to install.");
         }
 
-        var downloadPath = Path.Combine(Path.GetTempPath(), $"MyContent-{update.TargetVersion}-{Guid.NewGuid():N}.zip");
-        var extractPath = Path.Combine(Path.GetTempPath(), $"MyContent-update-{Guid.NewGuid():N}");
+        var installerPath = Path.Combine(
+            Path.GetTempPath(),
+            $"MyContent-Setup-{update.TargetVersion}-{Guid.NewGuid():N}.exe");
 
-        progress?.Invoke("Downloading update...");
+        progress?.Invoke("Downloading update…");
+
         await using (var source = await Http.GetStreamAsync(update.DownloadUrl, cancellationToken))
-        await using (var destination = File.Create(downloadPath))
+        await using (var destination = File.Create(installerPath))
         {
             await source.CopyToAsync(destination, cancellationToken);
         }
 
-        Directory.CreateDirectory(extractPath);
-        ZipFile.ExtractToDirectory(downloadPath, extractPath, overwriteFiles: true);
+        var appDirectory = AppContext.BaseDirectory.TrimEnd(
+            Path.DirectorySeparatorChar,
+            Path.AltDirectorySeparatorChar);
 
-        var appDirectory = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        var executableName = Path.GetFileName(Environment.ProcessPath ?? "MyContent.exe");
-        var scriptPath = Path.Combine(Path.GetTempPath(), $"MyContent-updater-{Guid.NewGuid():N}.ps1");
-
-        progress?.Invoke("Installing update...");
-
-        var script = $$"""
-param(
-    [int]$ProcessId,
-    [string]$Source,
-    [string]$Target,
-    [string]$Executable,
-    [string]$ZipFile,
-    [string]$ExtractDir,
-    [string]$ScriptFile
-)
-
-while (Get-Process -Id $ProcessId -ErrorAction SilentlyContinue) {
-    Start-Sleep -Milliseconds 300
-}
-
-Get-ChildItem -LiteralPath $Source -Force | ForEach-Object {
-    Copy-Item -LiteralPath $_.FullName -Destination $Target -Recurse -Force
-}
-
-Remove-Item -LiteralPath $ZipFile -Force -ErrorAction SilentlyContinue
-Remove-Item -LiteralPath $ExtractDir -Recurse -Force -ErrorAction SilentlyContinue
-Start-Process -FilePath (Join-Path $Target $Executable)
-Start-Sleep -Milliseconds 500
-Remove-Item -LiteralPath $ScriptFile -Force -ErrorAction SilentlyContinue
-""";
-
-        await File.WriteAllTextAsync(scriptPath, script, cancellationToken);
+        progress?.Invoke("Installing update…");
 
         var startInfo = new ProcessStartInfo
         {
-            FileName = "powershell.exe",
-            Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -ProcessId {Environment.ProcessId} -Source \"{extractPath}\" -Target \"{appDirectory}\" -Executable \"{executableName}\" -ZipFile \"{downloadPath}\" -ExtractDir \"{extractPath}\" -ScriptFile \"{scriptPath}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
+            FileName = installerPath,
+            Arguments = $"/VERYSILENT /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /DIR=\"{appDirectory}\"",
+            UseShellExecute = true,
+            Verb = "runas",
+            WorkingDirectory = Path.GetTempPath(),
         };
 
         Process.Start(startInfo);
