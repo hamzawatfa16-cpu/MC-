@@ -2,106 +2,123 @@
     x:Class="MyContent.Views.AuthWindow"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Width="560"
+    Width="760"
     Height="760"
-    MinWidth="480"
+    MinWidth="620"
     MinHeight="640"
     Title="My Content"
     WindowStartupLocation="CenterScreen">
   <Window.Styles>
-    <Style Selector="Button.auth-action">
-      <Setter Property="RenderTransform" Value="scale(1)" />
+    <Style Selector="Button.primary-auth">
+      <Setter Property="Background" Value="#FFFFFF" />
+      <Setter Property="Foreground" Value="#111318" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Padding" Value="18,14" />
+      <Setter Property="FontSize" Value="16" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
       <Setter Property="Transitions">
         <Transitions>
           <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" />
+          <DoubleTransition Property="Opacity" Duration="0:0:0.12" />
         </Transitions>
       </Setter>
+      <Setter Property="RenderTransform" Value="scale(1)" />
     </Style>
-    <Style Selector="Button.auth-action:pointerover">
-      <Setter Property="RenderTransform" Value="scale(1.025)" />
+    <Style Selector="Button.primary-auth:pointerover">
+      <Setter Property="Opacity" Value="0.92" />
+      <Setter Property="RenderTransform" Value="scale(1.015)" />
     </Style>
-    <Style Selector="Border.auth-card">
-      <Setter Property="Opacity" Value="1" />
-      <Setter Property="Transitions">
-        <Transitions>
-          <DoubleTransition Property="Opacity" Duration="0:0:0.18" />
-        </Transitions>
-      </Setter>
+    <Style Selector="Button.ghost-action">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Foreground" Value="#B8C0D4" />
+      <Setter Property="Padding" Value="4" />
+    </Style>
+    <Style Selector="Button.ghost-action:pointerover">
+      <Setter Property="Foreground" Value="#FFFFFF" />
     </Style>
   </Window.Styles>
 
-  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-    <Grid MaxWidth="460" Margin="40" HorizontalAlignment="Center" RowDefinitions="Auto,Auto,Auto,*,Auto,Auto">
-      <Grid Grid.Row="0">
-        <StackPanel HorizontalAlignment="Left" Spacing="8">
-          <TextBlock FontSize="32" FontWeight="SemiBold" Text="My Content" />
-          <TextBlock Opacity="0.7" Text="Creator intelligence, built from your real data." TextWrapping="Wrap" />
+  <Border Background="#07090F" Padding="28">
+    <Grid RowDefinitions="Auto,*,Auto">
+      <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+          <Border Width="42" Height="42" CornerRadius="12" Background="#FFFFFF">
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="17" FontWeight="Bold" Foreground="#111318" Text="MC" />
+          </Border>
+          <StackPanel Spacing="1">
+            <TextBlock FontSize="19" FontWeight="SemiBold" Text="My Content" />
+            <TextBlock FontSize="12" Opacity="0.55" Text="Creator intelligence" />
+          </StackPanel>
         </StackPanel>
         <Button
             x:Name="UpdateButton"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Top"
-            Padding="10,6"
-            Classes="auth-action"
+            Grid.Column="1"
+            Classes="ghost-action"
             Click="OnUpdateClicked"
-            Content="Update · v0.1.0" />
+            Content="Up to date · v0.1.0" />
       </Grid>
 
-      <Border Grid.Row="1" Margin="0,28,0,0" Padding="4" Background="#12000000" CornerRadius="10">
-        <Grid ColumnDefinitions="*,*">
-          <Button Grid.Column="0" Classes="auth-action" Command="{Binding SelectSignInCommand}" Content="Sign in" />
-          <Button Grid.Column="1" Classes="auth-action" Command="{Binding SelectSignUpCommand}" Content="Create account" />
+      <ScrollViewer Grid.Row="1" Margin="0,18,0,18" HorizontalScrollBarVisibility="Disabled">
+        <Grid MaxWidth="560" Margin="0,10" HorizontalAlignment="Center" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+          <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,8,0,0" Spacing="8">
+            <TextBlock HorizontalAlignment="Center" FontSize="38" FontWeight="SemiBold" Text="Welcome to My Content" />
+            <TextBlock HorizontalAlignment="Center" MaxWidth="520" FontSize="16" Opacity="0.62" Text="Your creator workspace starts with one secure sign-in." TextAlignment="Center" TextWrapping="Wrap" />
+          </StackPanel>
+
+          <Border Grid.Row="1" Margin="0,28,0,0" Padding="30" Background="#111521" BorderBrush="#242A3A" BorderThickness="1" CornerRadius="22">
+            <StackPanel Spacing="18">
+              <StackPanel Spacing="6">
+                <TextBlock FontSize="24" FontWeight="SemiBold" Text="Sign in" />
+                <TextBlock Opacity="0.58" Text="Use your Google account to continue." TextWrapping="Wrap" />
+              </StackPanel>
+
+              <Button
+                  Classes="primary-auth"
+                  Command="{Binding SignInWithGoogleCommand}"
+                  Content="Continue with Google"
+                  IsDefault="True" />
+
+              <Border Background="#1A1F2B" CornerRadius="12" Padding="14">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                  <Border Width="30" Height="30" CornerRadius="9" Background="#252C3B">
+                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="13" FontWeight="Bold" Text="✓" />
+                  </Border>
+                  <TextBlock Grid.Column="1" VerticalAlignment="Center" Opacity="0.68" Text="Your sign-in is handled securely by Google and Supabase." TextWrapping="Wrap" />
+                </Grid>
+              </Border>
+
+              <CheckBox IsChecked="{Binding TermsAccepted, Mode=TwoWay}" HorizontalContentAlignment="Left">
+                <TextBlock MaxWidth="460" Opacity="0.7" Text="I agree to the Terms of Service and acknowledge the Cookie Notice." TextWrapping="Wrap" />
+              </CheckBox>
+            </StackPanel>
+          </Border>
+
+          <Border Grid.Row="2" Margin="0,18,0,0" Padding="16,14" Background="#0D1018" BorderBrush="#1B2030" BorderThickness="1" CornerRadius="16">
+            <StackPanel Spacing="4">
+              <TextBlock HorizontalAlignment="Center" FontWeight="SemiBold" Text="{Binding StatusMessage}" TextWrapping="Wrap" TextAlignment="Center" />
+              <TextBlock HorizontalAlignment="Center" Foreground="#FF6B78" Text="{Binding ErrorMessage}" TextWrapping="Wrap" TextAlignment="Center" />
+            </StackPanel>
+          </Border>
+
+          <Border Grid.Row="3" Margin="0,18,0,0" Padding="18" Background="#0D1018" BorderBrush="#1B2030" BorderThickness="1" CornerRadius="16" IsVisible="{Binding IsAuthenticated}">
+            <StackPanel Spacing="10">
+              <TextBlock HorizontalAlignment="Center" FontSize="18" FontWeight="SemiBold" Text="You are signed in" />
+              <TextBlock HorizontalAlignment="Center" Opacity="0.7" Text="{Binding AuthenticatedEmail}" TextWrapping="Wrap" TextAlignment="Center" />
+              <Button Classes="primary-auth" Command="{Binding SignOutCommand}" Content="Sign out" />
+            </StackPanel>
+          </Border>
+
+          <StackPanel Grid.Row="4" Margin="0,18,0,0" HorizontalAlignment="Center" Orientation="Horizontal" Spacing="14">
+            <Button Classes="ghost-action" Click="OnTermsClicked" Content="Terms of Service" />
+            <TextBlock VerticalAlignment="Center" Opacity="0.35" Text="•" />
+            <Button Classes="ghost-action" Click="OnCookieClicked" Content="Cookie Notice" />
+          </StackPanel>
         </Grid>
-      </Border>
+      </ScrollViewer>
 
-      <Border Grid.Row="2" Classes="auth-card" Background="Transparent">
-        <StackPanel Margin="0,18,0,0" Spacing="4">
-          <TextBlock FontWeight="SemiBold" Text="{Binding StatusMessage}" TextWrapping="Wrap" />
-          <TextBlock Foreground="#C62828" Text="{Binding ErrorMessage}" TextWrapping="Wrap" />
-        </StackPanel>
-      </Border>
-
-      <StackPanel Grid.Row="3" Margin="0,22,0,0" IsEnabled="{Binding CanUseAuthForm}" Spacing="16">
-        <StackPanel Spacing="6">
-          <TextBlock Text="Email" />
-          <TextBox x:Name="EmailBox" Text="{Binding Email, Mode=TwoWay}" Watermark="you@example.com" />
-        </StackPanel>
-
-        <StackPanel Spacing="6">
-          <TextBlock Text="Password" />
-          <TextBox PasswordChar="●" Text="{Binding Password, Mode=TwoWay}" Watermark="Password" />
-        </StackPanel>
-
-        <StackPanel IsVisible="{Binding IsSignUpMode}" Spacing="6">
-          <TextBlock Text="Confirm password" />
-          <TextBox PasswordChar="●" Text="{Binding ConfirmPassword, Mode=TwoWay}" Watermark="Repeat your password" />
-        </StackPanel>
-
-        <CheckBox IsChecked="{Binding TermsAccepted, Mode=TwoWay}">
-          <TextBlock Text="I agree to the Terms of Service and acknowledge the Cookie Notice." TextWrapping="Wrap" />
-        </CheckBox>
-
-        <Button
-            HorizontalAlignment="Stretch"
-            Classes="auth-action"
-            Command="{Binding SubmitCommand}"
-            Content="{Binding SubmitButtonText}"
-            IsDefault="True" />
-      </StackPanel>
-
-      <StackPanel Grid.Row="4" Margin="0,18,0,0" HorizontalAlignment="Center" Orientation="Horizontal" Spacing="8">
-        <Button Padding="0" Background="Transparent" BorderThickness="0" Classes="auth-action" Content="Terms of Service" Click="OnTermsClicked" />
-        <TextBlock VerticalAlignment="Center" Opacity="0.45" Text="•" />
-        <Button Padding="0" Background="Transparent" BorderThickness="0" Classes="auth-action" Content="Cookie Notice" Click="OnCookieClicked" />
-      </StackPanel>
-
-      <Border Grid.Row="5" Margin="0,18,0,0" Padding="18" Background="#10000000" CornerRadius="12" IsVisible="{Binding IsAuthenticated}">
-        <StackPanel Spacing="12">
-          <TextBlock FontSize="18" FontWeight="SemiBold" Text="You are signed in" />
-          <TextBlock Opacity="0.75" Text="{Binding AuthenticatedEmail}" TextWrapping="Wrap" />
-          <Button Classes="auth-action" Command="{Binding SignOutCommand}" Content="Sign out" />
-        </StackPanel>
-      </Border>
+      <TextBlock Grid.Row="2" HorizontalAlignment="Center" Opacity="0.35" Text="My Content · Built for creators" />
     </Grid>
-  </ScrollViewer>
+  </Border>
 </Window>
