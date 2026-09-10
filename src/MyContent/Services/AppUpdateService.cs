@@ -1,18 +1,19 @@
 using System.Diagnostics;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using MyContent.Configuration;
 
 namespace MyContent.Services;
 
-internal sealed class AppUpdateService
+internal static class AppUpdateService
 {
     private static readonly HttpClient Http = new()
     {
         Timeout = TimeSpan.FromMinutes(5)
     };
 
-    public async Task<UpdateCheckResult> CheckAsync(CancellationToken cancellationToken = default)
+    public static async Task<UpdateCheckResult> CheckAsync(CancellationToken cancellationToken = default)
     {
         using var request = new HttpRequestMessage(
             HttpMethod.Get,
@@ -21,7 +22,7 @@ internal sealed class AppUpdateService
 
         try
         {
-            using var response = await Http.SendAsync(request, cancellationToken);
+            using var response = await Http.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
@@ -29,7 +30,7 @@ internal sealed class AppUpdateService
             }
 
             response.EnsureSuccessStatusCode();
-            var release = await response.Content.ReadFromJsonAsync<GitHubRelease>(cancellationToken);
+            var release = await response.Content.ReadFromJsonAsync<GitHubRelease>(cancellationToken).ConfigureAwait(false);
 
             if (release is null || string.IsNullOrWhiteSpace(release.TagName))
             {
@@ -68,13 +69,21 @@ internal sealed class AppUpdateService
         {
             throw;
         }
-        catch (Exception exception)
+        catch (HttpRequestException exception)
+        {
+            return UpdateCheckResult.Failure(exception.Message);
+        }
+        catch (JsonException exception)
+        {
+            return UpdateCheckResult.Failure(exception.Message);
+        }
+        catch (FormatException exception)
         {
             return UpdateCheckResult.Failure(exception.Message);
         }
     }
 
-    public async Task ApplyAsync(UpdateCheckResult update, Action<string>? progress = null, CancellationToken cancellationToken = default)
+    public static async Task ApplyAsync(UpdateCheckResult update, Action<string>? progress = null, CancellationToken cancellationToken = default)
     {
         if (!update.IsAvailable || string.IsNullOrWhiteSpace(update.DownloadUrl))
         {
@@ -87,38 +96,62 @@ internal sealed class AppUpdateService
 
         progress?.Invoke("Downloading update…");
 
-        await using (var source = await Http.GetStreamAsync(update.DownloadUrl, cancellationToken))
-        await using (var destination = File.Create(installerPath))
+        try
         {
-            await source.CopyToAsync(destination, cancellationToken);
+            var downloadUri = new Uri(update.DownloadUrl, UriKind.Absolute);
+            await using (var source = await Http.GetStreamAsync(downloadUri, cancellationToken).ConfigureAwait(false))
+            await using (var destination = File.Create(installerPath))
+            {
+                await source.CopyToAsync(destination, cancellationToken).ConfigureAwait(false);
+            }
+
+            var appDirectory = AppContext.BaseDirectory.TrimEnd(
+                Path.DirectorySeparatorChar,
+                Path.AltDirectorySeparatorChar);
+
+            progress?.Invoke("Installing update…");
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = installerPath,
+                Arguments = $"/VERYSILENT /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /DIR=\"{appDirectory}\"",
+                UseShellExecute = true,
+                WorkingDirectory = Path.GetTempPath(),
+            };
+
+            if (Process.Start(startInfo) is null)
+            {
+                throw new InvalidOperationException("Windows could not start the downloaded installer.");
+            }
+
+            Environment.Exit(0);
         }
-
-        var appDirectory = AppContext.BaseDirectory.TrimEnd(
-            Path.DirectorySeparatorChar,
-            Path.AltDirectorySeparatorChar);
-
-        progress?.Invoke("Installing update…");
-
-        var startInfo = new ProcessStartInfo
+        catch (HttpRequestException)
         {
-            FileName = installerPath,
-            Arguments = $"/VERYSILENT /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /DIR=\"{appDirectory}\"",
-            UseShellExecute = true,
-            WorkingDirectory = Path.GetTempPath(),
-        };
-
-        if (Process.Start(startInfo) is null)
-        {
-            throw new InvalidOperationException("Windows could not start the downloaded installer.");
+            throw;
         }
-
-        Environment.Exit(0);
+        catch (UriFormatException)
+        {
+            throw;
+        }
+        catch (IOException)
+        {
+            throw;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            throw;
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
     }
 
     private static Version? ParseVersion(string tag)
     {
         var normalized = tag.Trim();
-        while (normalized.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+        while (normalized.StartsWith('v', StringComparison.OrdinalIgnoreCase))
         {
             normalized = normalized[1..];
         }
