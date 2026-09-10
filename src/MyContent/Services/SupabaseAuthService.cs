@@ -35,7 +35,7 @@ internal sealed class SupabaseAuthService
             return;
         }
 
-        await _client.InitializeAsync();
+        await _client.InitializeAsync().ConfigureAwait(true);
         _initialized = true;
     }
 
@@ -44,19 +44,19 @@ internal sealed class SupabaseAuthService
     public async Task SignInAsync(string email, string password)
     {
         EnsureInitialized();
-        await _client.Auth.SignIn(email, password);
+        await _client.Auth.SignIn(email, password).ConfigureAwait(true);
     }
 
     public async Task SignUpAsync(string email, string password)
     {
         EnsureInitialized();
-        await _client.Auth.SignUp(email, password);
+        await _client.Auth.SignUp(email, password).ConfigureAwait(true);
     }
 
     public async Task SignOutAsync()
     {
         EnsureInitialized();
-        await _client.Auth.SignOut();
+        await _client.Auth.SignOut().ConfigureAwait(true);
     }
 
     private void EnsureInitialized()
