@@ -21,7 +21,7 @@ internal sealed class GoogleOAuthCallback : IDisposable
     public async Task<Uri> WaitForCallbackAsync(CancellationToken cancellationToken = default)
     {
         using var client = await _listener.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
-        await using var stream = client.GetStream();
+        using var stream = client.GetStream();
         using var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
 
         var requestLine = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
