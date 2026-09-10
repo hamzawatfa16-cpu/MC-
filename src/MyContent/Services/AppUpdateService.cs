@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -96,56 +97,33 @@ internal static class AppUpdateService
 
         progress?.Invoke("Downloading update…");
 
-        try
+        var downloadUri = new Uri(update.DownloadUrl, UriKind.Absolute);
+        await using (var source = await Http.GetStreamAsync(downloadUri, cancellationToken).ConfigureAwait(false))
+        await using (var destination = File.Create(installerPath))
         {
-            var downloadUri = new Uri(update.DownloadUrl, UriKind.Absolute);
-            await using (var source = await Http.GetStreamAsync(downloadUri, cancellationToken).ConfigureAwait(false))
-            await using (var destination = File.Create(installerPath))
-            {
-                await source.CopyToAsync(destination, cancellationToken).ConfigureAwait(false);
-            }
+            await source.CopyToAsync(destination, cancellationToken).ConfigureAwait(false);
+        }
 
-            var appDirectory = AppContext.BaseDirectory.TrimEnd(
-                Path.DirectorySeparatorChar,
-                Path.AltDirectorySeparatorChar);
+        var appDirectory = AppContext.BaseDirectory.TrimEnd(
+            Path.DirectorySeparatorChar,
+            Path.AltDirectorySeparatorChar);
 
-            progress?.Invoke("Installing update…");
+        progress?.Invoke("Installing update…");
 
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = installerPath,
-                Arguments = $"/VERYSILENT /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /DIR=\"{appDirectory}\"",
-                UseShellExecute = true,
-                WorkingDirectory = Path.GetTempPath(),
-            };
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = installerPath,
+            Arguments = $"/VERYSILENT /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /DIR=\"{appDirectory}\"",
+            UseShellExecute = true,
+            WorkingDirectory = Path.GetTempPath(),
+        };
 
-            if (Process.Start(startInfo) is null)
-            {
-                throw new InvalidOperationException("Windows could not start the downloaded installer.");
-            }
+        if (Process.Start(startInfo) is null)
+        {
+            throw new InvalidOperationException("Windows could not start the downloaded installer.");
+        }
 
-            Environment.Exit(0);
-        }
-        catch (HttpRequestException)
-        {
-            throw;
-        }
-        catch (UriFormatException)
-        {
-            throw;
-        }
-        catch (IOException)
-        {
-            throw;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            throw;
-        }
-        catch (InvalidOperationException)
-        {
-            throw;
-        }
+        Environment.Exit(0);
     }
 
     private static Version? ParseVersion(string tag)
@@ -159,12 +137,14 @@ internal static class AppUpdateService
         return Version.TryParse(normalized, out var version) ? version : null;
     }
 
+    [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "System.Text.Json materializes this record during release-response deserialization.")]
     private sealed record GitHubRelease(
         [property: JsonPropertyName("tag_name")] string TagName,
         [property: JsonPropertyName("name")] string? Name,
         [property: JsonPropertyName("body")] string? Body,
         [property: JsonPropertyName("assets")] List<GitHubAsset> Assets);
 
+    [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "System.Text.Json materializes this record during release-response deserialization.")]
     private sealed record GitHubAsset(
         [property: JsonPropertyName("name")] string Name,
         [property: JsonPropertyName("browser_download_url")] string BrowserDownloadUrl);
