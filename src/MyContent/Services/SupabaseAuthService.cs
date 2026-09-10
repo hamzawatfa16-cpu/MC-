@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using Supabase;
 using Supabase.Gotrue;
 using static Supabase.Gotrue.Constants;
 using SupabaseClient = Supabase.Client;
@@ -61,7 +63,7 @@ internal sealed class SupabaseAuthService
             throw new InvalidOperationException("Google sign-in could not start securely.");
         }
 
-        Process.Start(new System.Diagnostics.ProcessStartInfo
+        Process.Start(new ProcessStartInfo
         {
             FileName = authState.Uri.ToString(),
             UseShellExecute = true
