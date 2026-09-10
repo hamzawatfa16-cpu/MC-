@@ -1,12 +1,12 @@
-using Supabase;
 using Supabase.Gotrue;
 using static Supabase.Gotrue.Constants;
+using SupabaseClient = Supabase.Client;
 
 namespace MyContent.Services;
 
 internal sealed class SupabaseAuthService
 {
-    private readonly Client _client;
+    private readonly SupabaseClient _client;
     private bool _initialized;
 
     public SupabaseAuthService(string projectUrl, string publishableKey)
@@ -21,7 +21,7 @@ internal sealed class SupabaseAuthService
             throw new ArgumentException("Supabase publishable key is required.", nameof(publishableKey));
         }
 
-        _client = new Client(
+        _client = new SupabaseClient(
             projectUrl,
             publishableKey,
             new SupabaseOptions
