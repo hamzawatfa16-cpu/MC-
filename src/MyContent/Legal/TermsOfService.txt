@@ -1,39 +1,49 @@
 MY CONTENT — TERMS OF SERVICE
 
-Effective date: 10 September 2026
+Effective date: 11 September 2026
 
-1. Acceptance
-By creating an account or using My Content, you agree to these Terms of Service. If you do not agree, do not use the application.
+1. About My Content
+My Content is a Windows desktop application for creator-focused account access, data handling, analytics, and related intelligence features. The application connects to third-party services only through the authorization and access those services provide.
 
-2. Service
-My Content is a Windows desktop application intended to connect supported creator accounts and present analytics and intelligence based on data available through authorized platform APIs.
+2. Acceptance
+By using My Content, you agree to these Terms. If you do not agree to them, do not use the application.
 
-3. Account
-You are responsible for keeping access to your account and connected platform accounts secure. You must provide information that is accurate and must not use another person's account or data without authorization.
+3. Account and authentication
+My Content currently uses Google sign-in through Supabase Auth. You are responsible for using an account you are authorized to use and for keeping your Google account and device secure. My Content does not ask for or store your Google account password.
 
-4. Connected Platforms
-Connecting YouTube, Instagram, TikTok, or another supported service requires authorization from that service. Their terms, policies, permissions, and API limitations also apply. My Content does not grant permissions that the platform itself does not provide.
+4. Third-party services
+Google, Supabase, and any future connected services operate under their own terms, privacy notices, security practices, and technical limits. My Content cannot guarantee the continued availability of a third-party service or API.
 
-5. Data and Analytics
-My Content may store platform data and calculated analytics to provide the service. Platform facts are kept distinct from calculated analytics and AI-derived interpretations. Missing platform data is not treated as zero.
+5. Authorization and data access
+My Content may access information made available after you authorize the application. You must not use My Content to access another person's account, data, or services without permission.
 
-6. AI and Insights
-AI-generated insights are interpretations based on available stored evidence. They are not guarantees of future performance and do not override source platform facts.
+6. Accuracy and analytics
+Information shown by My Content may come directly from a connected service, be calculated by the application, or be generated from available data. Calculated or generated information is not a guarantee of future results. Missing data is not automatically treated as zero.
 
-7. Acceptable Use
-You must not use My Content to access data without authorization, interfere with the service, attempt to bypass access controls, or violate applicable laws or third-party platform rules.
+7. Acceptable use
+You must not use My Content to bypass access controls, misuse third-party services, interfere with the application, attempt unauthorized access, or violate applicable law or third-party rules.
 
-8. Availability
-The application depends on Supabase and supported third-party platform services. Features may become unavailable when a provider changes, limits, removes, or discontinues an API capability.
+8. Security
+You are responsible for maintaining reasonable security on the device and accounts you use with My Content. Do not share authentication links, account access, or session information with other people.
 
-9. Changes
-These Terms may be updated when the service or its legal requirements change. The effective date will identify the current version.
+9. Availability and changes
+My Content may change, be interrupted, or depend on services outside the application's control. These Terms may be updated when the application or its legal requirements change. The effective date above identifies the current version.
 
-10. Contact
-No contact address is specified in this initial application document. A current contact method will be published before a production release that requires one.
+10. Intellectual property
+My Content, its branding, interface, software, and original content are protected by applicable intellectual-property laws. You may not copy, redistribute, or modify the application except where applicable law or a separate license permits it.
 
-11. No Warranty
-The application is provided on an availability basis. No promise is made that every platform metric, integration, or analysis will always be available or accurate beyond the source data and calculations actually available to the application.
+11. Disclaimer
+My Content is provided on an availability basis. No guarantee is made that every connected service, metric, calculation, or generated insight will always be available, complete, or error-free.
 
-12. Termination
-Access may be suspended or ended when necessary to protect the service, users, platform permissions, or security.
+12. Limitation
+To the extent permitted by applicable law, you use My Content at your own discretion and are responsible for decisions you make using information shown by the application.
+
+13. Termination
+Access may be suspended or ended when necessary to protect users, the application, connected services, security, or legal requirements.
+
+14. Contact
+Support and legal questions can be raised through the My Content project repository and its issue tracker:
+https://github.com/hamzawatfa16-cpu/MC-
+
+15. Governing law
+Any legal relationship concerning My Content is subject to the mandatory laws and jurisdiction that apply to the user and service provider. Nothing in these Terms removes rights that cannot lawfully be excluded.
