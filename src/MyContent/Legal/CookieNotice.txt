@@ -1,21 +1,25 @@
 MY CONTENT — COOKIE NOTICE
 
-Effective date: 10 September 2026
+Effective date: 11 September 2026
 
 1. What this notice covers
-This notice explains how My Content handles browser-cookie-related technologies in the current Windows desktop application.
+This notice explains how the current My Content Windows desktop application handles cookies and similar browser storage during authentication and external web flows.
 
-2. Native desktop application
-My Content is a native Windows desktop application. The current password-based Supabase Auth flow does not use browser cookies as its normal application session mechanism.
+2. My Content is a native desktop application
+My Content does not use a normal web page as its main interface and does not intentionally place advertising or tracking cookies on the application itself.
 
-3. Supabase Auth
-Authentication is provided by Supabase Auth. The application uses the Supabase client to sign users in and out. The current implementation does not intentionally place authentication cookies in your Windows browser.
+3. Google and Supabase authentication
+The current sign-in flow uses Google through Supabase Auth. The authentication flow opens your normal web browser. Google, Supabase, and the browser may use cookies or similar technologies to keep the authentication flow working, protect accounts, remember preferences, or detect abuse. Those technologies are controlled by the relevant service and are governed by its own policies.
 
-4. External websites and providers
-When an authentication or connected-platform flow opens an external website, that website or provider may use cookies or similar technologies under its own privacy and cookie policies. Those technologies are controlled by the external service, not by this application.
+4. What My Content controls
+My Content does not intentionally use browser cookies for advertising or cross-site tracking. The application uses the authentication session returned by Supabase after the Google sign-in flow is completed.
 
-5. Future changes
-If My Content later introduces functionality that uses browser cookies or another tracking technology directly, this notice will be updated before that functionality is used.
+5. External websites
+When My Content opens a third-party website, that website may use cookies or similar technologies according to its own privacy and cookie policies. My Content does not control those technologies.
 
-6. Your acknowledgement
-By proceeding with account creation or sign-in, you acknowledge that you have read this Cookie Notice.
+6. Changes
+This notice will be updated before the application intentionally introduces a new direct cookie or tracking use that materially changes the behavior described here.
+
+7. Questions
+Support and legal questions can be raised through the My Content project repository and its issue tracker:
+https://github.com/hamzawatfa16-cpu/MC-
