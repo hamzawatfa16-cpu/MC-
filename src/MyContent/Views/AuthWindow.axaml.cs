@@ -20,7 +20,7 @@ internal sealed partial class AuthWindow : Window
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         DataContext = _viewModel;
         InitializeComponent();
-        UpdateButton.Content = $"Up to date · v{AppVersion.Current}";
+        UpdateButton.Content = $"v{AppVersion.Current}";
         Opened += OnOpened;
     }
 
