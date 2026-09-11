@@ -43,7 +43,7 @@ internal sealed partial class AuthWindow : Window
     private async Task CheckForUpdatesAsync(bool showResult)
     {
         UpdateButton.IsEnabled = false;
-        UpdateButton.Content = "Checking updates\u2026";
+        UpdateButton.Content = "Checking updates...";
 
         try
         {
@@ -59,7 +59,7 @@ internal sealed partial class AuthWindow : Window
             }
             else if (result.IsAvailable)
             {
-                UpdateButton.Content = $"Update \u00b7 v{result.TargetVersion}";
+                UpdateButton.Content = $"Update - v{result.TargetVersion}";
 
                 if (showResult)
                 {
@@ -68,7 +68,7 @@ internal sealed partial class AuthWindow : Window
             }
             else if (result.IsUpToDate)
             {
-                UpdateButton.Content = $"Up to date \u00b7 v{AppVersion.Current}";
+                UpdateButton.Content = $"Up to date - v{AppVersion.Current}";
                 if (showResult)
                 {
                     await ShowMessageAsync("My Content is up to date", $"You are running v{AppVersion.Current}. The latest release is {result.TargetVersion}.").ConfigureAwait(true);
@@ -164,7 +164,7 @@ internal sealed partial class AuthWindow : Window
             return;
         }
 
-        UpdateButton.Content = "Installing\u2026";
+        UpdateButton.Content = "Installing...";
 
         try
         {
@@ -194,7 +194,7 @@ internal sealed partial class AuthWindow : Window
         }
         finally
         {
-            UpdateButton.Content = $"Up to date \u00b7 v{AppVersion.Current}";
+            UpdateButton.Content = $"Up to date - v{AppVersion.Current}";
             UpdateButton.IsEnabled = true;
         }
     }
