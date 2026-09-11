@@ -9,7 +9,7 @@ namespace MyContent.ViewModels;
 internal sealed class AuthViewModel : INotifyPropertyChanged
 {
     private readonly SupabaseAuthService _authService;
-    private string _statusMessage = "Connecting securely…";
+    private string _statusMessage = "Connecting securely...";
     private string? _errorMessage;
     private string? _authenticatedEmail;
     private bool _termsAccepted;
@@ -89,6 +89,8 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
 
     public bool CanUseAuthForm => IsSupabaseReady && !IsBusy && !IsAuthenticated;
 
+    public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
+
     public string StatusMessage
     {
         get => _statusMessage;
@@ -98,7 +100,13 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
     public string? ErrorMessage
     {
         get => _errorMessage;
-        private set => SetField(ref _errorMessage, value);
+        private set
+        {
+            if (SetField(ref _errorMessage, value))
+            {
+                OnPropertyChanged(nameof(HasError));
+            }
+        }
     }
 
     public string? AuthenticatedEmail
@@ -129,7 +137,7 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
         {
             IsSupabaseReady = false;
             StatusMessage = "Connection unavailable.";
-            ErrorMessage = "My Content could not connect to its authentication service. Please try again.";
+            ErrorMessage = "My Content could not connect. Please try again.";
         }
         finally
         {
@@ -147,7 +155,7 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
 
         ErrorMessage = null;
         IsBusy = true;
-        StatusMessage = "Opening Google sign-in…";
+        StatusMessage = "Opening Google sign-in...";
 
         try
         {
@@ -168,7 +176,7 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
         catch (Exception)
         {
             StatusMessage = "Google sign-in could not be completed.";
-            ErrorMessage = "Please finish the Google sign-in in your browser and try again.";
+            ErrorMessage = "Finish Google sign-in in your browser, then try again.";
         }
         finally
         {
