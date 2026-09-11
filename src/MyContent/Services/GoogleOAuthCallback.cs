@@ -20,47 +20,77 @@ internal sealed class GoogleOAuthCallback : IDisposable
 
     public async Task<Uri> WaitForCallbackAsync(CancellationToken cancellationToken = default)
     {
-        using var client = await _listener.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
-        using var stream = client.GetStream();
-        using var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
-
-        var requestLine = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(requestLine))
-        {
-            throw new InvalidOperationException("Google sign-in returned an empty callback.");
-        }
+        var callbackPath = new Uri(RedirectUri).AbsolutePath;
 
         while (true)
         {
-            var headerLine = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
-            if (string.IsNullOrEmpty(headerLine))
+            cancellationToken.ThrowIfCancellationRequested();
+
+            using var client = await _listener.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
+            using var stream = client.GetStream();
+            using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen: true);
+
+            var requestLine = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(requestLine))
             {
-                break;
+                continue;
             }
+
+            while (true)
+            {
+                var headerLine = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
+                if (string.IsNullOrEmpty(headerLine))
+                {
+                    break;
+                }
+            }
+
+            var requestParts = requestLine.Split(' ', 3, StringSplitOptions.RemoveEmptyEntries);
+            if (requestParts.Length < 2 || !requestParts[0].Equals("GET", StringComparison.Ordinal))
+            {
+                await WriteResponseAsync(stream, HttpStatusCode.BadRequest, "Invalid callback.", cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+
+            if (!Uri.TryCreate(new Uri(RedirectUri), requestParts[1], out var callbackUri))
+            {
+                await WriteResponseAsync(stream, HttpStatusCode.BadRequest, "Invalid callback URL.", cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+
+            if (!string.Equals(callbackUri.AbsolutePath, callbackPath, StringComparison.OrdinalIgnoreCase))
+            {
+                await WriteResponseAsync(stream, HttpStatusCode.NotFound, "Not found.", cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+
+            await WriteResponseAsync(
+                stream,
+                HttpStatusCode.OK,
+                "<!doctype html><html><head><meta charset=\"utf-8\"><title>My Content</title></head><body><p>Google sign-in completed. You can close this window and return to My Content.</p></body></html>",
+                cancellationToken).ConfigureAwait(false);
+
+            return callbackUri;
         }
-
-        var requestParts = requestLine.Split(' ', 3, StringSplitOptions.RemoveEmptyEntries);
-        if (requestParts.Length < 2 || !requestParts[0].Equals("GET", StringComparison.Ordinal))
-        {
-            throw new InvalidOperationException("Google sign-in returned an invalid callback.");
-        }
-
-        if (!Uri.TryCreate(new Uri(RedirectUri), requestParts[1], out var callbackUri))
-        {
-            throw new InvalidOperationException("Google sign-in returned an invalid callback URL.");
-        }
-
-        const string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n<!doctype html><html><head><meta charset=\"utf-8\"><title>My Content</title></head><body><p>Google sign-in completed. You can close this window and return to My Content.</p></body></html>";
-        var bytes = Encoding.UTF8.GetBytes(response);
-        await stream.WriteAsync(bytes, cancellationToken).ConfigureAwait(false);
-        await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
-
-        return callbackUri;
     }
 
     public void Dispose()
     {
         _listener.Stop();
         _listener.Dispose();
+    }
+
+    private static async Task WriteResponseAsync(
+        NetworkStream stream,
+        HttpStatusCode statusCode,
+        string body,
+        CancellationToken cancellationToken)
+    {
+        var statusText = statusCode == HttpStatusCode.OK ? "OK" : statusCode.ToString();
+        var response =
+            $"HTTP/1.1 {(int)statusCode} {statusText}\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n{body}";
+        var bytes = Encoding.UTF8.GetBytes(response);
+        await stream.WriteAsync(bytes, cancellationToken).ConfigureAwait(false);
+        await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
     }
 }
