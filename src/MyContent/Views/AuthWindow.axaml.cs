@@ -9,7 +9,7 @@ using MyContent.Configuration;
 using MyContent.Services;
 using MyContent.ViewModels;
 
-#pragma warning disable CA2007 // Avalonia UI awaits must resume on the UI thread.
+#pragma warning disable CA2007
 
 namespace MyContent.Views;
 
@@ -31,16 +31,16 @@ internal sealed partial class AuthWindow : Window
     {
         Opened -= OnOpened;
         await _viewModel.InitializeAsync().ConfigureAwait(true);
-        _ = CheckForUpdatesAsync(false);
+        _ = CheckForUpdatesAsync(userRequested: false);
     }
 
     private async void OnUpdateClicked(object? sender, RoutedEventArgs e)
     {
-        await CheckForUpdatesAsync(true).ConfigureAwait(true);
+        await CheckForUpdatesAsync(userRequested: true).ConfigureAwait(true);
     }
 
     [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "The desktop UI must keep running when an update provider fails unexpectedly.")]
-    private async Task CheckForUpdatesAsync(bool showResult)
+    private async Task CheckForUpdatesAsync(bool userRequested)
     {
         UpdateButton.IsEnabled = false;
         UpdateButton.Content = "Checking updates...";
@@ -52,41 +52,41 @@ internal sealed partial class AuthWindow : Window
             if (result.Error is not null)
             {
                 UpdateButton.Content = $"v{AppVersion.Current}";
-                if (showResult)
+                if (userRequested)
                 {
                     await ShowMessageAsync("Update check failed", "My Content could not check for updates right now.").ConfigureAwait(true);
                 }
-            }
-            else if (result.IsAvailable)
-            {
-                UpdateButton.Content = $"Update - v{result.TargetVersion}";
 
-                if (showResult)
-                {
-                    await InstallUpdateAsync(result).ConfigureAwait(true);
-                }
+                return;
             }
-            else if (result.IsUpToDate)
+
+            if (result.IsAvailable)
+            {
+                await ApplyUpdateAsync(result).ConfigureAwait(true);
+                return;
+            }
+
+            if (result.IsUpToDate)
             {
                 UpdateButton.Content = $"Up to date - v{AppVersion.Current}";
-                if (showResult)
+                if (userRequested)
                 {
-                    await ShowMessageAsync("My Content is up to date", $"You are running v{AppVersion.Current}. The latest release is {result.TargetVersion}.").ConfigureAwait(true);
+                    await ShowMessageAsync("My Content is up to date", $"You are already running the latest version, v{AppVersion.Current}.").ConfigureAwait(true);
                 }
+
+                return;
             }
-            else
+
+            UpdateButton.Content = $"v{AppVersion.Current}";
+            if (userRequested)
             {
-                UpdateButton.Content = $"v{AppVersion.Current}";
-                if (showResult)
-                {
-                    await ShowMessageAsync("No release yet", "There is no GitHub Release published for My Content yet. The updater is ready for the first Windows release package.").ConfigureAwait(true);
-                }
+                await ShowMessageAsync("No update yet", "There is no newer My Content release to install.").ConfigureAwait(true);
             }
         }
         catch (Exception)
         {
             UpdateButton.Content = $"v{AppVersion.Current}";
-            if (showResult)
+            if (userRequested)
             {
                 await ShowMessageAsync("Update check failed", "My Content could not check for updates right now.").ConfigureAwait(true);
             }
@@ -97,74 +97,10 @@ internal sealed partial class AuthWindow : Window
         }
     }
 
-    private async Task InstallUpdateAsync(UpdateCheckResult result)
+    private async Task ApplyUpdateAsync(UpdateCheckResult result)
     {
-        var releaseTitle = string.IsNullOrWhiteSpace(result.ReleaseName)
-            ? result.TargetVersion
-            : result.ReleaseName;
-
-        var installButton = new Button
-        {
-            Content = "Install update",
-            HorizontalAlignment = HorizontalAlignment.Stretch
-        };
-        var cancelButton = new Button
-        {
-            Content = "Not now",
-            HorizontalAlignment = HorizontalAlignment.Stretch
-        };
-
-        var confirm = new Window
-        {
-            Title = "Update available",
-            Width = 460,
-            Height = 320,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            CanResize = false,
-            Content = new StackPanel
-            {
-                Margin = new Avalonia.Thickness(24),
-                Spacing = 14,
-                Children =
-                {
-                    new TextBlock
-                    {
-                        FontSize = 22,
-                        FontWeight = FontWeight.SemiBold,
-                        Text = $"My Content {result.TargetVersion}"
-                    },
-                    new TextBlock
-                    {
-                        Text = releaseTitle,
-                        TextWrapping = TextWrapping.Wrap
-                    },
-                    new TextBlock
-                    {
-                        Opacity = 0.75,
-                        Text = "The update will download, install, and restart My Content automatically."
-                    },
-                    installButton,
-                    cancelButton
-                }
-            }
-        };
-
-        var shouldInstall = false;
-        installButton.Click += (_, _) =>
-        {
-            shouldInstall = true;
-            confirm.Close();
-        };
-        cancelButton.Click += (_, _) => confirm.Close();
-
-        await confirm.ShowDialog(this).ConfigureAwait(true);
-
-        if (!shouldInstall)
-        {
-            return;
-        }
-
-        UpdateButton.Content = "Installing...";
+        UpdateButton.IsEnabled = false;
+        UpdateButton.Content = $"Updating to {result.TargetVersion}...";
 
         try
         {
@@ -194,7 +130,7 @@ internal sealed partial class AuthWindow : Window
         }
         finally
         {
-            UpdateButton.Content = $"Up to date - v{AppVersion.Current}";
+            UpdateButton.Content = $"v{AppVersion.Current}";
             UpdateButton.IsEnabled = true;
         }
     }
@@ -214,22 +150,9 @@ internal sealed partial class AuthWindow : Window
                 Spacing = 16,
                 Children =
                 {
-                    new TextBlock
-                    {
-                        FontSize = 20,
-                        FontWeight = FontWeight.SemiBold,
-                        Text = title
-                    },
-                    new TextBlock
-                    {
-                        Text = message,
-                        TextWrapping = TextWrapping.Wrap
-                    },
-                    new Button
-                    {
-                        Content = "OK",
-                        HorizontalAlignment = HorizontalAlignment.Right
-                    }
+                    new TextBlock { FontSize = 20, FontWeight = FontWeight.SemiBold, Text = title },
+                    new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap },
+                    new Button { Content = "OK", HorizontalAlignment = HorizontalAlignment.Right }
                 }
             }
         };
@@ -239,15 +162,11 @@ internal sealed partial class AuthWindow : Window
         await window.ShowDialog(this).ConfigureAwait(true);
     }
 
-    private async void OnTermsClicked(object? sender, RoutedEventArgs e)
-    {
+    private async void OnTermsClicked(object? sender, RoutedEventArgs e) =>
         await ShowLegalDocumentAsync("Terms of Service", "TermsOfService.txt").ConfigureAwait(true);
-    }
 
-    private async void OnCookieClicked(object? sender, RoutedEventArgs e)
-    {
+    private async void OnCookieClicked(object? sender, RoutedEventArgs e) =>
         await ShowLegalDocumentAsync("Cookie Notice", "CookieNotice.txt").ConfigureAwait(true);
-    }
 
     private async Task ShowLegalDocumentAsync(string title, string fileName)
     {
@@ -255,9 +174,7 @@ internal sealed partial class AuthWindow : Window
         await using var stream = AssetLoader.Open(resourceUri);
         using var reader = new StreamReader(stream);
         var content = await reader.ReadToEndAsync().ConfigureAwait(true);
-
-        var window = new LegalDocumentWindow(title, content);
-        await window.ShowDialog(this).ConfigureAwait(true);
+        await new LegalDocumentWindow(title, content).ShowDialog(this).ConfigureAwait(true);
     }
 }
 
