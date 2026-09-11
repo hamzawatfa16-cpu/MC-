@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
+using System.Text;
 using Supabase;
 using Supabase.Gotrue;
 using static Supabase.Gotrue.Constants;
@@ -51,7 +52,6 @@ internal sealed class SupabaseAuthService
         EnsureInitialized();
 
         using var callback = new GoogleOAuthCallback();
-        var state = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
         var authState = await _client.Auth.SignIn(
             Provider.Google,
             new SignInOptions
@@ -65,15 +65,16 @@ internal sealed class SupabaseAuthService
             throw new InvalidOperationException("Google sign-in could not start securely.");
         }
 
-        var authorizationUriBuilder = new UriBuilder(authState.Uri);
-        var authorizationQuery = authorizationUriBuilder.Query.TrimStart('?');
-        authorizationUriBuilder.Query = string.IsNullOrEmpty(authorizationQuery)
-            ? $"state={Uri.EscapeDataString(state)}"
-            : $"{authorizationQuery}&state={Uri.EscapeDataString(state)}";
+        var authorizationParameters = ParseQuery(authState.Uri.Query);
+        if (!authorizationParameters.TryGetValue("state", out var expectedState) ||
+            string.IsNullOrWhiteSpace(expectedState))
+        {
+            throw new InvalidOperationException("Google sign-in could not start securely.");
+        }
 
         Process.Start(new ProcessStartInfo
         {
-            FileName = authorizationUriBuilder.Uri.ToString(),
+            FileName = authState.Uri.ToString(),
             UseShellExecute = true
         });
 
@@ -81,7 +82,7 @@ internal sealed class SupabaseAuthService
         var parameters = ParseQuery(callbackUri.Query);
 
         if (!parameters.TryGetValue("state", out var returnedState) ||
-            !string.Equals(returnedState, state, StringComparison.Ordinal))
+            !FixedEquals(returnedState, expectedState))
         {
             throw new InvalidOperationException("Google sign-in returned an invalid security state.");
         }
@@ -119,6 +120,14 @@ internal sealed class SupabaseAuthService
         {
             throw new InvalidOperationException("Supabase has not been initialized.");
         }
+    }
+
+    private static bool FixedEquals(string left, string right)
+    {
+        var leftBytes = Encoding.UTF8.GetBytes(left);
+        var rightBytes = Encoding.UTF8.GetBytes(right);
+        return leftBytes.Length == rightBytes.Length &&
+               CryptographicOperations.FixedTimeEquals(leftBytes, rightBytes);
     }
 
     private static Dictionary<string, string> ParseQuery(string query)
