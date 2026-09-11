@@ -1,7 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Platform;
+using Avalonia.Threading;
 using MyContent.Configuration;
 using MyContent.Services;
 using MyContent.ViewModels;
@@ -40,15 +43,23 @@ internal sealed partial class AuthWindow : Window
     private async Task CheckForUpdatesAsync(bool showResult)
     {
         UpdateButton.IsEnabled = false;
-        UpdateButton.Content = "Checking updates…";
+        UpdateButton.Content = "Checking updates\u2026";
 
         try
         {
             var result = await AppUpdateService.CheckAsync().ConfigureAwait(true);
 
-            if (result.IsAvailable)
+            if (result.Error is not null)
             {
-                UpdateButton.Content = $"Update · v{result.TargetVersion}";
+                UpdateButton.Content = $"v{AppVersion.Current}";
+                if (showResult)
+                {
+                    await ShowMessageAsync("Update check failed", "My Content could not check for updates right now.").ConfigureAwait(true);
+                }
+            }
+            else if (result.IsAvailable)
+            {
+                UpdateButton.Content = $"Update \u00b7 v{result.TargetVersion}";
 
                 if (showResult)
                 {
@@ -57,18 +68,10 @@ internal sealed partial class AuthWindow : Window
             }
             else if (result.IsUpToDate)
             {
-                UpdateButton.Content = $"Up to date · v{AppVersion.Current}";
+                UpdateButton.Content = $"Up to date \u00b7 v{AppVersion.Current}";
                 if (showResult)
                 {
                     await ShowMessageAsync("My Content is up to date", $"You are running v{AppVersion.Current}. The latest release is {result.TargetVersion}.").ConfigureAwait(true);
-                }
-            }
-            else if (!result.HasRelease)
-            {
-                UpdateButton.Content = $"v{AppVersion.Current}";
-                if (showResult)
-                {
-                    await ShowMessageAsync("No release yet", "There is no GitHub Release published for My Content yet. The updater is ready for the first Windows release package.").ConfigureAwait(true);
                 }
             }
             else
@@ -76,7 +79,7 @@ internal sealed partial class AuthWindow : Window
                 UpdateButton.Content = $"v{AppVersion.Current}";
                 if (showResult)
                 {
-                    await ShowMessageAsync("Update check failed", "My Content could not check for updates right now.").ConfigureAwait(true);
+                    await ShowMessageAsync("No release yet", "There is no GitHub Release published for My Content yet. The updater is ready for the first Windows release package.").ConfigureAwait(true);
                 }
             }
         }
@@ -100,11 +103,22 @@ internal sealed partial class AuthWindow : Window
             ? result.TargetVersion
             : result.ReleaseName;
 
+        var installButton = new Button
+        {
+            Content = "Install update",
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+        var cancelButton = new Button
+        {
+            Content = "Not now",
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+
         var confirm = new Window
         {
             Title = "Update available",
             Width = 460,
-            Height = 280,
+            Height = 320,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             CanResize = false,
             Content = new StackPanel
@@ -116,66 +130,73 @@ internal sealed partial class AuthWindow : Window
                     new TextBlock
                     {
                         FontSize = 22,
-                        FontWeight = Avalonia.Media.FontWeight.SemiBold,
+                        FontWeight = FontWeight.SemiBold,
                         Text = $"My Content {result.TargetVersion}"
                     },
                     new TextBlock
                     {
                         Text = releaseTitle,
-                        TextWrapping = Avalonia.Media.TextWrapping.Wrap
+                        TextWrapping = TextWrapping.Wrap
                     },
                     new TextBlock
                     {
                         Opacity = 0.75,
                         Text = "The update will download, install, and restart My Content automatically."
                     },
-                    new Button
-                    {
-                        Content = "Install update",
-                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch
-                    }
+                    installButton,
+                    cancelButton
                 }
             }
         };
 
-        var button = ((StackPanel)confirm.Content!).Children.OfType<Button>().Single();
-        button.Click += async (_, _) =>
+        var shouldInstall = false;
+        installButton.Click += (_, _) =>
         {
+            shouldInstall = true;
             confirm.Close();
-            UpdateButton.Content = "Installing…";
-
-            try
-            {
-                await AppUpdateService.ApplyAsync(result, message => UpdateButton.Content = message).ConfigureAwait(true);
-            }
-            catch (HttpRequestException)
-            {
-                await ShowMessageAsync("Update failed", "The update could not be downloaded.").ConfigureAwait(true);
-            }
-            catch (UriFormatException)
-            {
-                await ShowMessageAsync("Update failed", "The update link was invalid.").ConfigureAwait(true);
-            }
-            catch (IOException)
-            {
-                await ShowMessageAsync("Update failed", "The update could not be saved on this computer.").ConfigureAwait(true);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                await ShowMessageAsync("Update failed", "My Content does not have permission to install the update.").ConfigureAwait(true);
-            }
-            catch (InvalidOperationException)
-            {
-                await ShowMessageAsync("Update failed", "The update could not be started.").ConfigureAwait(true);
-            }
-            finally
-            {
-                UpdateButton.Content = $"Up to date · v{AppVersion.Current}";
-                UpdateButton.IsEnabled = true;
-            }
         };
+        cancelButton.Click += (_, _) => confirm.Close();
 
         await confirm.ShowDialog(this).ConfigureAwait(true);
+
+        if (!shouldInstall)
+        {
+            return;
+        }
+
+        UpdateButton.Content = "Installing\u2026";
+
+        try
+        {
+            await AppUpdateService.ApplyAsync(
+                result,
+                message => Dispatcher.UIThread.Post(() => UpdateButton.Content = message)).ConfigureAwait(true);
+        }
+        catch (HttpRequestException)
+        {
+            await ShowMessageAsync("Update failed", "The update could not be downloaded.").ConfigureAwait(true);
+        }
+        catch (UriFormatException)
+        {
+            await ShowMessageAsync("Update failed", "The update link was invalid.").ConfigureAwait(true);
+        }
+        catch (IOException)
+        {
+            await ShowMessageAsync("Update failed", "The update could not be saved on this computer.").ConfigureAwait(true);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            await ShowMessageAsync("Update failed", "My Content does not have permission to install the update.").ConfigureAwait(true);
+        }
+        catch (InvalidOperationException)
+        {
+            await ShowMessageAsync("Update failed", "The update could not be started.").ConfigureAwait(true);
+        }
+        finally
+        {
+            UpdateButton.Content = $"Up to date \u00b7 v{AppVersion.Current}";
+            UpdateButton.IsEnabled = true;
+        }
     }
 
     private async Task ShowMessageAsync(string title, string message)
@@ -196,18 +217,18 @@ internal sealed partial class AuthWindow : Window
                     new TextBlock
                     {
                         FontSize = 20,
-                        FontWeight = Avalonia.Media.FontWeight.SemiBold,
+                        FontWeight = FontWeight.SemiBold,
                         Text = title
                     },
                     new TextBlock
                     {
                         Text = message,
-                        TextWrapping = Avalonia.Media.TextWrapping.Wrap
+                        TextWrapping = TextWrapping.Wrap
                     },
                     new Button
                     {
                         Content = "OK",
-                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right
+                        HorizontalAlignment = HorizontalAlignment.Right
                     }
                 }
             }
