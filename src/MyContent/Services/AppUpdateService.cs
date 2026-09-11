@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -20,6 +21,7 @@ internal static class AppUpdateService
             HttpMethod.Get,
             $"https://api.github.com/repos/{AppVersion.Repository}/releases/latest");
         request.Headers.UserAgent.ParseAdd("MyContent-Updater/1.0");
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
 
         try
         {
@@ -50,7 +52,7 @@ internal static class AppUpdateService
                 return UpdateCheckResult.UpToDate(AppVersion.Current, release.TagName);
             }
 
-            var asset = release.Assets.FirstOrDefault(x =>
+            var asset = (release.Assets ?? []).FirstOrDefault(x =>
                 string.Equals(x.Name, AppVersion.ReleaseAssetName, StringComparison.OrdinalIgnoreCase));
 
             if (asset is null || string.IsNullOrWhiteSpace(asset.BrowserDownloadUrl))
@@ -98,9 +100,11 @@ internal static class AppUpdateService
         progress?.Invoke("Downloading update…");
 
         var downloadUri = new Uri(update.DownloadUrl, UriKind.Absolute);
-        using var source = await Http.GetStreamAsync(downloadUri, cancellationToken).ConfigureAwait(false);
-        using var destination = File.Create(installerPath);
-        await source.CopyToAsync(destination, cancellationToken).ConfigureAwait(false);
+        using (var source = await Http.GetStreamAsync(downloadUri, cancellationToken).ConfigureAwait(false))
+        using (var destination = File.Create(installerPath))
+        {
+            await source.CopyToAsync(destination, cancellationToken).ConfigureAwait(false);
+        }
 
         var appDirectory = AppContext.BaseDirectory.TrimEnd(
             Path.DirectorySeparatorChar,
@@ -140,7 +144,7 @@ internal static class AppUpdateService
         [property: JsonPropertyName("tag_name")] string TagName,
         [property: JsonPropertyName("name")] string? Name,
         [property: JsonPropertyName("body")] string? Body,
-        [property: JsonPropertyName("assets")] List<GitHubAsset> Assets);
+        [property: JsonPropertyName("assets")] List<GitHubAsset>? Assets);
 
     [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "System.Text.Json materializes this record during release-response deserialization.")]
     private sealed record GitHubAsset(
