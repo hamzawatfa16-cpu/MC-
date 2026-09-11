@@ -9,6 +9,9 @@
     Title="My Content"
     WindowStartupLocation="CenterScreen">
   <Window.Styles>
+    <Style Selector="TextBlock">
+      <Setter Property="Foreground" Value="#E8ECF5" />
+    </Style>
     <Style Selector="Button.primary-auth">
       <Setter Property="Background" Value="#FFFFFF" />
       <Setter Property="Foreground" Value="#111318" />
@@ -67,7 +70,7 @@
             <TextBlock HorizontalAlignment="Center" MaxWidth="520" FontSize="16" Opacity="0.62" Text="Your creator workspace starts with one secure sign-in." TextAlignment="Center" TextWrapping="Wrap" />
           </StackPanel>
 
-          <Border Grid.Row="1" Margin="0,28,0,0" Padding="30" Background="#111521" BorderBrush="#242A3A" BorderThickness="1" CornerRadius="22">
+          <Border Grid.Row="1" Margin="0,28,0,0" Padding="30" Background="#111521" BorderBrush="#242A3A" BorderThickness="1" CornerRadius="22" IsVisible="{Binding !IsAuthenticated}">
             <StackPanel Spacing="18">
               <StackPanel Spacing="6">
                 <TextBlock FontSize="24" FontWeight="SemiBold" Text="Sign in" />
