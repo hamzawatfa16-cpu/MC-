@@ -2,10 +2,11 @@
     x:Class="MyContent.Views.AuthWindow"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Width="880"
-    Height="680"
-    MinWidth="760"
-    MinHeight="600"
+    Width="980"
+    Height="720"
+    MinWidth="860"
+    MinHeight="640"
+    Background="#07090F"
     Title="My Content"
     WindowStartupLocation="CenterScreen">
   <Window.Styles>
@@ -15,7 +16,7 @@
     <Style Selector="Button.primary-auth">
       <Setter Property="Background" Value="#FFFFFF" />
       <Setter Property="Foreground" Value="#111318" />
-      <Setter Property="CornerRadius" Value="14" />
+      <Setter Property="CornerRadius" Value="16" />
       <Setter Property="Padding" Value="22,18" />
       <Setter Property="FontSize" Value="18" />
       <Setter Property="FontWeight" Value="SemiBold" />
@@ -31,95 +32,139 @@
     </Style>
     <Style Selector="Button.primary-auth:pointerover">
       <Setter Property="Opacity" Value="0.94" />
-      <Setter Property="RenderTransform" Value="scale(1.02)" />
+      <Setter Property="RenderTransform" Value="scale(1.015)" />
+    </Style>
+    <Style Selector="Button.primary-auth:disabled">
+      <Setter Property="Opacity" Value="0.55" />
     </Style>
     <Style Selector="Button.ghost-action">
-      <Setter Property="Background" Value="Transparent" />
-      <Setter Property="BorderThickness" Value="0" />
-      <Setter Property="Foreground" Value="#B8C0D4" />
-      <Setter Property="Padding" Value="8,4" />
+      <Setter Property="Background" Value="#1A2033" />
+      <Setter Property="BorderBrush" Value="#2C3550" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Foreground" Value="#D5DCF0" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Padding" Value="14,10" />
     </Style>
     <Style Selector="Button.ghost-action:pointerover">
+      <Setter Property="Background" Value="#252C44" />
       <Setter Property="Foreground" Value="#FFFFFF" />
     </Style>
     <Style Selector="Button.inline-link">
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderThickness" Value="0" />
-      <Setter Property="Foreground" Value="#A99BFF" />
+      <Setter Property="Foreground" Value="#B7A8FF" />
       <Setter Property="Padding" Value="0" />
       <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
     <Style Selector="Button.inline-link:pointerover">
       <Setter Property="Foreground" Value="#FFFFFF" />
     </Style>
+    <Style Selector="Button.workspace-secondary">
+      <Setter Property="Background" Value="#1C2236" />
+      <Setter Property="BorderBrush" Value="#313A55" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Foreground" Value="#F2F4FA" />
+      <Setter Property="CornerRadius" Value="14" />
+      <Setter Property="Padding" Value="18,12" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.workspace-secondary:pointerover">
+      <Setter Property="Background" Value="#262E46" />
+    </Style>
   </Window.Styles>
 
-  <Border Padding="36">
-    <Border.Background>
-      <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-        <GradientStop Offset="0" Color="#07090F" />
-        <GradientStop Offset="0.55" Color="#12172A" />
-        <GradientStop Offset="1" Color="#1B1433" />
-      </LinearGradientBrush>
-    </Border.Background>
-    <Grid RowDefinitions="Auto,*,Auto">
-      <Grid ColumnDefinitions="*,Auto">
-        <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
-          <Border Width="52" Height="52" CornerRadius="16">
-            <Border.Background>
-              <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                <GradientStop Offset="0" Color="#FFFFFF" />
-                <GradientStop Offset="1" Color="#D9D3FF" />
-              </LinearGradientBrush>
-            </Border.Background>
-            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" FontWeight="Bold" Foreground="#16121F" Text="MC" />
-          </Border>
-          <StackPanel Spacing="2" VerticalAlignment="Center">
-            <TextBlock FontSize="22" FontWeight="SemiBold" Text="My Content" />
-            <TextBlock FontSize="13" Opacity="0.58" Text="Creator intelligence" />
-          </StackPanel>
-        </StackPanel>
-        <Button
-            x:Name="UpdateButton"
-            Grid.Column="1"
-            VerticalAlignment="Center"
-            Classes="ghost-action"
-            Click="OnUpdateClicked"
-            Content="Checking updates..." />
-      </Grid>
-
-      <Grid Grid.Row="1" Margin="0,28,0,16">
-        <Border
-            MaxWidth="720"
-            Padding="36"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Center"
-            Background="#141826"
-            BorderBrush="#2A3148"
-            BorderThickness="1"
-            BoxShadow="0 24 70 0 #66000000"
-            CornerRadius="28">
-          <StackPanel Spacing="20">
-            <StackPanel Spacing="8">
-              <TextBlock FontSize="34" FontWeight="SemiBold" Text="Welcome to My Content" TextWrapping="Wrap" />
-              <TextBlock FontSize="16" Opacity="0.62" Text="One Google sign-in. Your creator workspace starts here." TextWrapping="Wrap" />
+  <Grid>
+    <Border Padding="32">
+      <Border.Background>
+        <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+          <GradientStop Offset="0" Color="#07090F" />
+          <GradientStop Offset="0.52" Color="#12172A" />
+          <GradientStop Offset="1" Color="#23153A" />
+        </LinearGradientBrush>
+      </Border.Background>
+      <Grid RowDefinitions="Auto,*,Auto">
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+            <Border Width="54" Height="54" CornerRadius="18" BoxShadow="0 10 30 0 #55000000">
+              <Border.Background>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                  <GradientStop Offset="0" Color="#FFFFFF" />
+                  <GradientStop Offset="1" Color="#C9BFFF" />
+                </LinearGradientBrush>
+              </Border.Background>
+              <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" FontWeight="Bold" Foreground="#16121F" Text="MC" />
+            </Border>
+            <StackPanel Spacing="2" VerticalAlignment="Center">
+              <TextBlock FontSize="22" FontWeight="SemiBold" Text="My Content" />
+              <TextBlock FontSize="13" Opacity="0.58" Text="Creator intelligence" />
             </StackPanel>
+          </StackPanel>
+          <Button
+              x:Name="UpdateButton"
+              Grid.Column="1"
+              VerticalAlignment="Center"
+              Classes="ghost-action"
+              Click="OnUpdateClicked"
+              Content="Checking updates..." />
+        </Grid>
 
-            <StackPanel Spacing="16" IsVisible="{Binding !IsAuthenticated}">
+        <Grid Grid.Row="1" Margin="0,24,0,16">
+          <Border
+              MaxWidth="760"
+              Padding="40"
+              HorizontalAlignment="Stretch"
+              VerticalAlignment="Center"
+              Background="#141826"
+              BorderBrush="#2A3148"
+              BorderThickness="1"
+              BoxShadow="0 28 80 0 #66000000"
+              CornerRadius="30"
+              IsVisible="{Binding !IsAuthenticated}">
+            <StackPanel Spacing="22">
+              <StackPanel Spacing="8">
+                <TextBlock FontSize="36" FontWeight="SemiBold" Text="Welcome to My Content" TextWrapping="Wrap" />
+                <TextBlock FontSize="16" Opacity="0.64" Text="Sign in with Google to open your creator workspace." TextWrapping="Wrap" />
+              </StackPanel>
+
               <Button
                   Classes="primary-auth"
                   Command="{Binding SignInWithGoogleCommand}"
-                  Content="Continue with Google"
-                  IsDefault="True" />
+                  IsDefault="True">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                  <Border Width="28" Height="28" CornerRadius="14" Background="#F4F6FB">
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="16"
+                        FontWeight="Bold"
+                        Foreground="#4285F4"
+                        Text="G" />
+                  </Border>
+                  <TextBlock
+                      VerticalAlignment="Center"
+                      FontSize="18"
+                      FontWeight="SemiBold"
+                      Foreground="#111318"
+                      Text="{Binding SignInButtonText}" />
+                </StackPanel>
+              </Button>
 
-              <TextBlock Opacity="0.55" Text="{Binding StatusMessage}" TextWrapping="Wrap" />
+              <TextBlock
+                  FontSize="14"
+                  Opacity="0.62"
+                  IsVisible="{Binding HasStatusMessage}"
+                  Text="{Binding StatusMessage}"
+                  TextWrapping="Wrap" />
 
               <Border
                   Padding="12,10"
                   Background="#3A1520"
+                  BorderBrush="#6B2433"
+                  BorderThickness="1"
                   CornerRadius="12"
                   IsVisible="{Binding HasError}">
-                <TextBlock Foreground="#FF8A96" Text="{Binding ErrorMessage}" TextWrapping="Wrap" />
+                <TextBlock FontSize="14" Foreground="#FF9AA4" Text="{Binding ErrorMessage}" TextWrapping="Wrap" />
               </Border>
 
               <CheckBox IsChecked="{Binding TermsAccepted, Mode=TwoWay}" HorizontalContentAlignment="Left">
@@ -131,18 +176,113 @@
                 </WrapPanel>
               </CheckBox>
             </StackPanel>
+          </Border>
 
-            <StackPanel Spacing="14" IsVisible="{Binding IsAuthenticated}">
-              <TextBlock FontSize="20" FontWeight="SemiBold" Text="You are signed in" />
-              <TextBlock Opacity="0.7" Text="{Binding AuthenticatedEmail}" TextWrapping="Wrap" />
-              <TextBlock Opacity="0.55" Text="{Binding StatusMessage}" TextWrapping="Wrap" />
-              <Button Classes="primary-auth" Command="{Binding SignOutCommand}" Content="Sign out" />
-            </StackPanel>
-          </StackPanel>
-        </Border>
+          <Grid
+              ColumnDefinitions="260,*"
+              IsVisible="{Binding IsAuthenticated}">
+            <Border
+                Margin="0,0,18,0"
+                Padding="22"
+                Background="#141826"
+                BorderBrush="#2A3148"
+                BorderThickness="1"
+                CornerRadius="24">
+              <Grid RowDefinitions="Auto,*,Auto">
+                <StackPanel Spacing="8">
+                  <TextBlock FontSize="13" Opacity="0.5" Text="SIGNED IN" />
+                  <TextBlock FontSize="22" FontWeight="SemiBold" Text="{Binding Greeting}" TextWrapping="Wrap" />
+                  <TextBlock FontSize="13" Opacity="0.62" Text="{Binding AuthenticatedEmail}" TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Grid.Row="1" Margin="0,28,0,0" Spacing="10">
+                  <Border Background="#1C2438" CornerRadius="14" Padding="14">
+                    <StackPanel Spacing="4">
+                      <TextBlock FontWeight="SemiBold" Text="Workspace" />
+                      <TextBlock FontSize="13" Opacity="0.55" Text="Home" />
+                    </StackPanel>
+                  </Border>
+                  <Border Background="#121726" CornerRadius="14" Padding="14">
+                    <StackPanel Spacing="4">
+                      <TextBlock Opacity="0.86" Text="Library" />
+                      <TextBlock FontSize="13" Opacity="0.45" Text="Ready when your content tools arrive" />
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
+                <Button
+                    Grid.Row="2"
+                    Classes="workspace-secondary"
+                    Command="{Binding SignOutCommand}"
+                    Content="Sign out" />
+              </Grid>
+            </Border>
+
+            <Border
+                Padding="32"
+                Background="#141826"
+                BorderBrush="#2A3148"
+                BorderThickness="1"
+                CornerRadius="24">
+              <StackPanel Spacing="22">
+                <StackPanel Spacing="8">
+                  <TextBlock FontSize="32" FontWeight="SemiBold" Text="Your creator workspace" TextWrapping="Wrap" />
+                  <TextBlock FontSize="15" Opacity="0.62" Text="My Content is signed in and checking for updates in the background." TextWrapping="Wrap" />
+                </StackPanel>
+                <Grid ColumnDefinitions="*,*">
+                  <Border Background="#1B2236" CornerRadius="18" Padding="18" Margin="0,0,8,0">
+                    <StackPanel Spacing="8">
+                      <TextBlock FontSize="13" Opacity="0.5" Text="ACCOUNT" />
+                      <TextBlock FontSize="18" FontWeight="SemiBold" Text="Google connected" />
+                      <TextBlock FontSize="13" Opacity="0.58" Text="Password recovery stays with Google." TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Border>
+                  <Border Grid.Column="1" Background="#1B2236" CornerRadius="18" Padding="18" Margin="8,0,0,0">
+                    <StackPanel Spacing="8">
+                      <TextBlock FontSize="13" Opacity="0.5" Text="UPDATES" />
+                      <TextBlock FontSize="18" FontWeight="SemiBold" Text="Automatic" />
+                      <TextBlock FontSize="13" Opacity="0.58" Text="New releases install themselves and reopen My Content." TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Border>
+                </Grid>
+                <Border Background="#1B2236" CornerRadius="18" Padding="18">
+                  <StackPanel Spacing="8">
+                    <TextBlock FontSize="13" Opacity="0.5" Text="NEXT" />
+                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="Creator tools will land here" />
+                    <TextBlock FontSize="13" Opacity="0.58" Text="This home stays ready so sign-in, branding, and updates already feel like a finished product." TextWrapping="Wrap" />
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+            </Border>
+          </Grid>
+        </Grid>
+
+        <TextBlock Grid.Row="2" HorizontalAlignment="Center" Opacity="0.38" Text="My Content  -  Built for creators" />
       </Grid>
+    </Border>
 
-      <TextBlock Grid.Row="2" HorizontalAlignment="Center" Opacity="0.38" Text="My Content  -  Built for creators" />
-    </Grid>
-  </Border>
+    <Border
+        x:Name="UpdateOverlay"
+        IsVisible="False"
+        Background="#CC07090F">
+      <Border
+          MaxWidth="460"
+          Padding="32"
+          HorizontalAlignment="Center"
+          VerticalAlignment="Center"
+          Background="#171C2C"
+          BorderBrush="#343C58"
+          BorderThickness="1"
+          BoxShadow="0 24 70 0 #88000000"
+          CornerRadius="24">
+        <StackPanel Spacing="16">
+          <TextBlock FontSize="24" FontWeight="SemiBold" Text="Updating My Content" />
+          <TextBlock
+              x:Name="UpdateStatusText"
+              Opacity="0.7"
+              Text="Downloading the latest release..."
+              TextWrapping="Wrap" />
+          <ProgressBar Height="8" IsIndeterminate="True" />
+        </StackPanel>
+      </Border>
+    </Border>
+  </Grid>
 </Window>
