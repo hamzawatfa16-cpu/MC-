@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -14,6 +15,15 @@ internal static class AppUpdateService
     {
         Timeout = TimeSpan.FromMinutes(5)
     };
+
+    public static bool CanApplyInPlace
+    {
+        get
+        {
+            var directory = GetAppDirectory();
+            return File.Exists(Path.Combine(directory, "unins000.exe"));
+        }
+    }
 
     public static async Task<UpdateCheckResult> CheckAsync(CancellationToken cancellationToken = default)
     {
@@ -43,7 +53,7 @@ internal static class AppUpdateService
             var remoteVersion = ParseVersion(release.TagName);
             if (remoteVersion is null)
             {
-                return UpdateCheckResult.Failure("The latest GitHub release has an invalid version tag.");
+                return UpdateCheckResult.Failure("The latest My Content release could not be read.");
             }
 
             var current = Version.Parse(AppVersion.Current);
@@ -58,7 +68,7 @@ internal static class AppUpdateService
             if (asset is null || string.IsNullOrWhiteSpace(asset.BrowserDownloadUrl))
             {
                 return UpdateCheckResult.Failure(
-                    $"Version {release.TagName} is available, but its Windows installer is missing ({AppVersion.ReleaseAssetName}).");
+                    $"Version {release.TagName} is available, but the Windows package is missing.");
             }
 
             return UpdateCheckResult.Available(
@@ -72,17 +82,17 @@ internal static class AppUpdateService
         {
             throw;
         }
-        catch (HttpRequestException exception)
+        catch (HttpRequestException)
         {
-            return UpdateCheckResult.Failure(exception.Message);
+            return UpdateCheckResult.Failure("My Content could not reach the update server.");
         }
-        catch (JsonException exception)
+        catch (JsonException)
         {
-            return UpdateCheckResult.Failure(exception.Message);
+            return UpdateCheckResult.Failure("The update information was not valid.");
         }
-        catch (FormatException exception)
+        catch (FormatException)
         {
-            return UpdateCheckResult.Failure(exception.Message);
+            return UpdateCheckResult.Failure("The installed version could not be read.");
         }
     }
 
@@ -95,37 +105,74 @@ internal static class AppUpdateService
 
         var installerPath = Path.Combine(
             Path.GetTempPath(),
-            $"MyContent-Setup-{update.TargetVersion}-{Guid.NewGuid():N}.exe");
+            $"MyContent-Setup-{SanitizeFilePart(update.TargetVersion)}-{Guid.NewGuid():N}.exe");
 
-        progress?.Invoke("Downloading update…");
+        progress?.Invoke("Downloading update...");
 
         var downloadUri = new Uri(update.DownloadUrl, UriKind.Absolute);
         using (var source = await Http.GetStreamAsync(downloadUri, cancellationToken).ConfigureAwait(false))
-        using (var destination = File.Create(installerPath))
+        using (var destination = new FileStream(installerPath, FileMode.Create, FileAccess.Write, FileShare.None))
         {
             await source.CopyToAsync(destination, cancellationToken).ConfigureAwait(false);
+            await destination.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        var appDirectory = AppContext.BaseDirectory.TrimEnd(
-            Path.DirectorySeparatorChar,
-            Path.AltDirectorySeparatorChar);
+        progress?.Invoke("Installing update...");
+        StartSilentInstaller(installerPath);
+        Environment.Exit(0);
+    }
 
-        progress?.Invoke("Installing update…");
+    private static void StartSilentInstaller(string installerPath)
+    {
+        var appDirectory = GetAppDirectory();
+        var exePath = Path.Combine(appDirectory, "MyContent.exe");
+        var scriptPath = Path.Combine(Path.GetTempPath(), $"MyContent-Update-{Guid.NewGuid():N}.ps1");
+        var script =
+            "$ErrorActionPreference = 'Stop'" + Environment.NewLine +
+            "$pidToWait = " + Environment.ProcessId.ToString(CultureInfo.InvariantCulture) + Environment.NewLine +
+            "$setup = " + QuotePowerShell(installerPath) + Environment.NewLine +
+            "$app = " + QuotePowerShell(exePath) + Environment.NewLine +
+            "$dir = " + QuotePowerShell(appDirectory) + Environment.NewLine +
+            "while (Get-Process -Id $pidToWait -ErrorAction SilentlyContinue) { Start-Sleep -Seconds 1 }" + Environment.NewLine +
+            "Start-Process -FilePath $setup -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/CLOSEAPPLICATIONS',('/DIR=' + $dir)) -Wait" + Environment.NewLine +
+            "if (Test-Path -LiteralPath $app) { Start-Process -FilePath $app -ArgumentList '/updated' }" + Environment.NewLine +
+            "Remove-Item -LiteralPath $setup -Force -ErrorAction SilentlyContinue" + Environment.NewLine +
+            "Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue" + Environment.NewLine;
+
+        File.WriteAllText(scriptPath, script);
+
+        var powershell = Path.Combine(
+            Environment.SystemDirectory,
+            "WindowsPowerShell",
+            "v1.0",
+            "powershell.exe");
 
         var startInfo = new ProcessStartInfo
         {
-            FileName = installerPath,
-            Arguments = $"/VERYSILENT /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /DIR=\"{appDirectory}\"",
-            UseShellExecute = true,
+            FileName = File.Exists(powershell) ? powershell : "powershell.exe",
+            Arguments = "-NoProfile -ExecutionPolicy Bypass -File \"" + scriptPath + "\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
             WorkingDirectory = Path.GetTempPath(),
         };
 
         if (Process.Start(startInfo) is null)
         {
-            throw new InvalidOperationException("Windows could not start the downloaded installer.");
+            throw new InvalidOperationException("Windows could not start the update helper.");
         }
+    }
 
-        Environment.Exit(0);
+    private static string GetAppDirectory() =>
+        AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+    private static string QuotePowerShell(string value) =>
+        "'" + value.Replace("'", "''", StringComparison.Ordinal) + "'";
+
+    private static string SanitizeFilePart(string value)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        var chars = value.Select(ch => Array.IndexOf(invalid, ch) >= 0 ? '-' : ch).ToArray();
+        return new string(chars);
     }
 
     private static Version? ParseVersion(string tag)

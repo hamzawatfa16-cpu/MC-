@@ -9,7 +9,7 @@ namespace MyContent.ViewModels;
 internal sealed class AuthViewModel : INotifyPropertyChanged
 {
     private readonly SupabaseAuthService _authService;
-    private string _statusMessage = "Connecting securely...";
+    private string _statusMessage = "Connecting...";
     private string? _errorMessage;
     private string? _authenticatedEmail;
     private bool _termsAccepted;
@@ -56,6 +56,7 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
             if (SetField(ref _isBusy, value))
             {
                 OnPropertyChanged(nameof(CanUseAuthForm));
+                OnPropertyChanged(nameof(SignInButtonText));
                 RaiseCommandStates();
             }
         }
@@ -82,6 +83,7 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
             if (SetField(ref _isAuthenticated, value))
             {
                 OnPropertyChanged(nameof(CanUseAuthForm));
+                OnPropertyChanged(nameof(Greeting));
                 RaiseCommandStates();
             }
         }
@@ -91,10 +93,34 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
 
     public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
 
+    public bool HasStatusMessage => !string.IsNullOrWhiteSpace(StatusMessage) && !HasError;
+
+    public string SignInButtonText => IsBusy ? "Opening Google..." : "Continue with Google";
+
+    public string Greeting
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(AuthenticatedEmail))
+            {
+                return "Welcome back";
+            }
+
+            var local = AuthenticatedEmail.Split('@')[0];
+            return string.IsNullOrWhiteSpace(local) ? "Welcome back" : "Welcome, " + local;
+        }
+    }
+
     public string StatusMessage
     {
         get => _statusMessage;
-        private set => SetField(ref _statusMessage, value);
+        private set
+        {
+            if (SetField(ref _statusMessage, value))
+            {
+                OnPropertyChanged(nameof(HasStatusMessage));
+            }
+        }
     }
 
     public string? ErrorMessage
@@ -105,6 +131,7 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
             if (SetField(ref _errorMessage, value))
             {
                 OnPropertyChanged(nameof(HasError));
+                OnPropertyChanged(nameof(HasStatusMessage));
             }
         }
     }
@@ -112,7 +139,13 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
     public string? AuthenticatedEmail
     {
         get => _authenticatedEmail;
-        private set => SetField(ref _authenticatedEmail, value);
+        private set
+        {
+            if (SetField(ref _authenticatedEmail, value))
+            {
+                OnPropertyChanged(nameof(Greeting));
+            }
+        }
     }
 
     [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Authentication provider failures are shown to the user instead of crashing the desktop app.")]
@@ -130,13 +163,13 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
             }
             else
             {
-                StatusMessage = "Continue with Google to get started.";
+                StatusMessage = string.Empty;
             }
         }
         catch (Exception)
         {
             IsSupabaseReady = false;
-            StatusMessage = "Connection unavailable.";
+            StatusMessage = string.Empty;
             ErrorMessage = "My Content could not connect. Please try again.";
         }
         finally
@@ -155,7 +188,7 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
 
         ErrorMessage = null;
         IsBusy = true;
-        StatusMessage = "Opening Google sign-in...";
+        StatusMessage = "Finish sign-in in your browser, then come back here.";
 
         try
         {
@@ -171,12 +204,12 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Google sign-in cancelled.";
+            StatusMessage = "Google sign-in was cancelled.";
         }
         catch (Exception)
         {
-            StatusMessage = "Google sign-in could not be completed.";
-            ErrorMessage = "Finish Google sign-in in your browser, then try again.";
+            StatusMessage = string.Empty;
+            ErrorMessage = "Google sign-in did not finish. Try again.";
         }
         finally
         {
@@ -200,7 +233,7 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
         }
         catch (Exception)
         {
-            StatusMessage = "Sign out could not be completed.";
+            StatusMessage = string.Empty;
             ErrorMessage = "Please try signing out again.";
         }
         finally
@@ -216,7 +249,8 @@ internal sealed class AuthViewModel : INotifyPropertyChanged
     {
         IsAuthenticated = true;
         AuthenticatedEmail = email;
-        StatusMessage = "Signed in successfully.";
+        StatusMessage = string.Empty;
+        ErrorMessage = null;
     }
 
     private void RaiseCommandStates()
