@@ -1,0 +1,41 @@
+name: Tag version for release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/MyContent/MyContent.csproj'
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Create version tag and start release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(sed -n 's/.*<Version>\([^<]*\)<\/Version>.*/\1/p' src/MyContent/MyContent.csproj | head -n 1)"
+          if [ -z "${version}" ]; then
+            echo "No project version found."
+            exit 1
+          fi
+          tag="v${version}"
+          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+            echo "Tag ${tag} already exists."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "${tag}"
+          git push origin "${tag}"
+          gh workflow run "Build and Release My Content" --ref main -f "version=${version}"
